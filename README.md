@@ -13,7 +13,7 @@ Clickable MVP. Forecast numbers are placeholders until the model is trained.
 
 ## Repo layout
 
-- `docs/` – clickable prototype, served by GitHub Pages
+- `index.html` – clickable prototype, served by GitHub Pages
 - `hello.py` – team hello-world (each member added their name through a pull request)
 
 ## Team
