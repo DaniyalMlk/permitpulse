@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="PermitPulse forecasts when an NYC construction permit will be approved.">
+<title>PermitPulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a two-column workbench (project form | live forecast) on laptops, one column on phones; tables turn into stacked rows below 800px */
+:root {
+  --bg: #EEF0EF;
+  --surface: #FFFFFF;
+  --surface-2: #F4F5F4;
+  --fg: #16191D;
+  --muted: #525A63;
+  --line: #D7DBDB;
+  --line-strong: #858D93;
+  --accent: #C2410C;
+  --on-accent: #FFFFFF;
+  --strong: #16191D;
+  --on-strong: #FFFFFF;
+  --hdr-bg: #16191D;
+  --hdr-fg: #FFFFFF;
+  --hdr-muted: #C2C8CE;
+  --notice: #E2E5E4;
+  --save: #2B6CB0;
+  --save-text: #1D4F8C;
+  --add: #DD6B20;
+  --add-text: #A3360A;
+  --band-track: #E6E9E8;
+  --band-80: #CBD1D3;
+  --band-50: #8D979F;
+  --ok: #1F6B3A;
+  --focus: #1D4F8C;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111316; --surface: #1A1D21; --surface-2: #22262B; --fg: #E8EBED; --muted: #A4ACB4;
+    --line: #30353B; --line-strong: #6C757E; --accent: #F0813F; --on-accent: #16191D;
+    --strong: #E8EBED; --on-strong: #16191D; --hdr-bg: #0A0B0D; --hdr-fg: #FFFFFF; --hdr-muted: #AEB5BC;
+    --notice: #1A1D21; --save: #5B9BE0; --save-text: #8DBBF0; --add: #E8803F; --add-text: #F4A06B;
+    --band-track: #22262B; --band-80: #3B434C; --band-50: #6E7984; --ok: #6CC48A; --focus: #8DBBF0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111316; --surface: #1A1D21; --surface-2: #22262B; --fg: #E8EBED; --muted: #A4ACB4;
+  --line: #30353B; --line-strong: #6C757E; --accent: #F0813F; --on-accent: #16191D;
+  --strong: #E8EBED; --on-strong: #16191D; --hdr-bg: #0A0B0D; --hdr-fg: #FFFFFF; --hdr-muted: #AEB5BC;
+  --notice: #1A1D21; --save: #5B9BE0; --save-text: #8DBBF0; --add: #E8803F; --add-text: #F4A06B;
+  --band-track: #22262B; --band-80: #3B434C; --band-50: #6E7984; --ok: #6CC48A; --focus: #8DBBF0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
+h1, h2, h3 { text-wrap: balance; margin: 0; font-weight: 600; }
+p { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.num { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.tiny { font-size: 13px; }
+.wrap { max-width: 1200px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 32px); }
+
+/* Header */
+.site-header { background: var(--hdr-bg); color: var(--hdr-fg); }
+.header-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; padding-block: 6px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--hdr-fg); text-decoration: none; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.brand-mark { width: 30px; height: 30px; border-radius: 7px; background: var(--accent); color: var(--on-accent); display: inline-flex; align-items: center; justify-content: center; }
+.nav { display: flex; flex-wrap: wrap; margin-inline: -10px; }
+.nav a { min-height: 44px; padding-inline: 10px; display: inline-flex; align-items: center; color: var(--hdr-muted); font-size: 14px; font-weight: 500; text-decoration: none; }
+.nav a:hover { color: var(--hdr-fg); text-decoration: underline; text-underline-offset: 4px; }
+.notice { background: var(--notice); border-bottom: 1px solid var(--line); }
+.notice p { display: flex; gap: 8px; align-items: flex-start; padding-block: 10px; font-size: 13px; color: var(--muted); }
+.notice svg { flex: none; margin-top: 2px; }
+.notice strong { color: var(--fg); font-weight: 600; }
+
+/* Page */
+.main { display: flex; flex-direction: column; gap: 56px; padding-block: 32px 48px; }
+section[id] { scroll-margin-top: 16px; }
+.section { display: flex; flex-direction: column; gap: 20px; }
+.intro { max-width: 720px; display: flex; flex-direction: column; gap: 8px; }
+.intro h1 { font-size: clamp(26px, 5vw, 34px); line-height: 1.15; letter-spacing: -0.015em; }
+.intro h2 { font-size: clamp(22px, 4vw, 26px); line-height: 1.2; letter-spacing: -0.01em; }
+.intro p { color: var(--muted); max-width: 65ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: clamp(18px, 4vw, 28px); min-width: 0; }
+
+/* Workbench */
+.workbench { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (min-width: 960px) { .workbench { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); } }
+
+/* Form */
+.form { display: flex; flex-direction: column; gap: 22px; }
+.form-head { display: flex; flex-direction: column; gap: 4px; }
+.form-head h2 { font-size: 18px; }
+.field { min-width: 0; }
+.label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend { padding: 0; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.help { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
+.input, .select { width: 100%; height: 46px; padding-inline: 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--fg); font-family: var(--font-sans); font-size: 16px; }
+.input[type="date"] { -webkit-appearance: none; appearance: none; display: flex; align-items: center; min-width: 0; }
+.input::placeholder { color: var(--muted); opacity: 1; }
+.select-wrap { position: relative; }
+.select { -webkit-appearance: none; appearance: none; padding-right: 40px; cursor: pointer; }
+.select-wrap svg { position: absolute; right: 14px; top: 14px; pointer-events: none; }
+.money { position: relative; }
+.money span { position: absolute; left: 12px; top: 0; height: 46px; display: flex; align-items: center; color: var(--muted); }
+.money .input { padding-left: 26px; }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { min-height: 44px; padding-inline: 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); font-family: var(--font-sans); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.pill .check { display: none; }
+.pill[aria-pressed="true"] { background: var(--strong); border-color: var(--strong); color: var(--on-strong); }
+.pill[aria-pressed="true"] .check { display: inline-block; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option { width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); color: var(--fg); font-family: var(--font-sans); font-size: 15px; cursor: pointer; }
+.option[aria-pressed="true"] { border-color: var(--strong); background: var(--surface-2); }
+.radio { flex: none; width: 18px; height: 18px; margin-top: 3px; border-radius: 50%; border: 2px solid var(--fg); display: inline-flex; align-items: center; justify-content: center; }
+.radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: transparent; }
+.option[aria-pressed="true"] .radio::after { background: var(--fg); }
+.option-text { display: flex; flex-direction: column; gap: 2px; }
+.option-text strong { font-weight: 600; }
+.option-text span { font-size: 13px; color: var(--muted); }
+.form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+/* Buttons */
+.btn { min-height: 46px; padding-inline: 18px; border-radius: 10px; border: 1px solid transparent; font-family: var(--font-sans); font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; }
+.btn-accent { background: var(--accent); color: var(--on-accent); }
+.btn-strong { background: var(--strong); color: var(--on-strong); }
+.btn-outline { background: var(--surface); color: var(--fg); border-color: var(--line-strong); }
+.btn-sm { min-height: 44px; padding-inline: 14px; font-size: 14px; border-radius: 8px; }
+.btn-icon { width: 44px; padding: 0; }
+.btn-link { min-height: 44px; padding-inline: 6px; background: none; border: 0; color: var(--fg); font-family: var(--font-sans); font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Result */
+.result { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.empty { border-style: dashed; border-color: var(--line-strong); display: flex; flex-direction: column; gap: 20px; }
+.empty h2 { font-size: 22px; }
+.benefits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.benefits li { display: flex; gap: 12px; }
+.benefit-icon { flex: none; width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); display: inline-flex; align-items: center; justify-content: center; }
+.benefits strong { display: block; font-weight: 600; }
+.result-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 16px; }
+.result-title { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.result-title h2 { font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+.result-title h2:focus { outline: none; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.chips li { padding: 3px 10px; border-radius: 999px; background: var(--notice); font-size: 13px; color: var(--muted); }
+.result-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.saved-msg { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--ok); }
+.saved-msg a { color: var(--ok); text-underline-offset: 3px; }
+.tag { align-self: flex-start; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--notice); font-size: 12px; font-weight: 600; color: var(--muted); }
+.hero-grid { display: flex; flex-wrap: wrap; gap: 20px; }
+.hero-main { flex: 2 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.hero-side { flex: 1 1 200px; min-width: 0; background: var(--surface-2); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.kicker { font-size: 14px; font-weight: 600; color: var(--muted); }
+.big { font-size: clamp(32px, 7vw, 44px); line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.mid { font-size: clamp(22px, 4.5vw, 27px); line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+
+/* Range chart */
+.range { margin-top: 28px; }
+.legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.legend-keys { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.key { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.swatch-dash { width: 0; height: 12px; border-left: 2px dashed var(--fg); display: inline-block; }
+.plot { position: relative; height: 104px; }
+.plot-track, .plot-band, .plot-base, .plot-mark { position: absolute; }
+.plot-track { left: 0; right: 0; top: 34px; height: 30px; border-radius: 6px; background: var(--band-track); }
+.plot-band { top: 34px; height: 30px; }
+.band-80 { background: var(--band-80); border-radius: 6px; }
+.band-50 { background: var(--band-50); }
+.plot-base { top: 28px; height: 42px; border-left: 2px dashed var(--fg); }
+.plot-mark { top: 24px; height: 50px; width: 4px; margin-left: -2px; border-radius: 2px; background: var(--accent); }
+.plot-label { position: absolute; white-space: nowrap; font-size: 13px; }
+.plot-label.top { top: 0; font-weight: 600; }
+.plot-label.bottom { top: 78px; color: var(--muted); }
+.at-start { transform: translateX(-6px); }
+.at-mid { transform: translateX(-50%); }
+.at-end { transform: translateX(calc(-100% + 6px)); }
+.axis { position: relative; height: 18px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.axis span { position: absolute; top: 0; white-space: nowrap; }
+
+/* Drivers */
+.drivers-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 16px; margin-bottom: 10px; }
+.drivers-head > div { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.drivers-head h2 { font-size: 18px; }
+.driver { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr) 104px; grid-template-areas: "label bar value"; align-items: center; gap: 6px 16px; padding-block: 12px; border-top: 1px solid var(--line); }
+.driver-label { grid-area: label; min-width: 0; }
+.driver-label strong { display: block; font-weight: 600; }
+.driver-label span { display: block; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.driver-bar { grid-area: bar; position: relative; height: 22px; }
+.driver-bar::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--line-strong); }
+.driver-bar span { position: absolute; top: 3px; height: 16px; border-radius: 3px; }
+.bar-save { background: var(--save); }
+.bar-add { background: var(--add); }
+.driver-value { grid-area: value; text-align: right; font-size: 14px; }
+.val-save { color: var(--save-text); }
+.val-add { color: var(--add-text); }
+.val-none { color: var(--muted); }
+.driver.total { border-top: 2px solid var(--fg); padding-bottom: 0; }
+.driver.total .driver-value { font-size: 15px; }
+@media (max-width: 640px) {
+  .driver { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label value" "bar bar"; }
+  .driver.base .driver-bar, .driver.total .driver-bar { display: none; }
+}
+
+/* Lower result cards */
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.pair .card { display: flex; flex-direction: column; gap: 10px; }
+.pair h2 { font-size: 17px; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--surface-2); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tile .num { font-size: 20px; white-space: nowrap; }
+
+/* Tables (saved projects, field map) */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+.saved-card { padding: 0; overflow: hidden; }
+.saved-table { min-width: 760px; }
+.saved-table td.name { font-weight: 600; }
+.saved-table .likely { font-weight: 600; white-space: nowrap; }
+.saved-table .range-cell { font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.map-table td:nth-child(2) { font-family: var(--font-mono); font-size: 13px; }
+.map-table td:nth-child(3) { color: var(--muted); }
+.map-table th, .map-table td { padding-inline: 0 16px; }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 14px; min-height: 0; }
+.status:empty { display: none; }
+@media (max-width: 800px) {
+  .stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .stack, .stack tbody, .stack tr, .stack td { display: block; width: 100%; min-width: 0; }
+  .stack td { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; border: 0; text-align: right; }
+  .stack td::before { content: attr(data-label); font-size: 13px; font-weight: 500; color: var(--muted); text-align: left; flex: none; }
+  .stack td.name { text-align: left; font-size: 16px; padding-bottom: 8px; }
+  .stack td.name::before, .stack td.actions::before { content: none; }
+  .saved-card { background: none; border: 0; border-radius: 0; }
+  .saved-table tbody { display: flex; flex-direction: column; gap: 12px; }
+  .saved-table tr { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .saved-table td.actions { padding-top: 10px; }
+  .row-actions { justify-content: flex-start; width: 100%; }
+  .row-actions .btn-strong { flex: 1 1 auto; }
+  .map-table tr { padding-block: 10px; border-bottom: 1px solid var(--line); }
+  .map-table tr:last-child { border-bottom: 0; }
+  .map-table td:nth-child(1) { font-weight: 600; text-align: left; }
+  .map-table td:nth-child(1)::before { content: none; }
+  .map-table td:nth-child(3) { text-align: right; }
+}
+
+/* How it works */
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.step { display: flex; flex-direction: column; gap: 8px; }
+.step-no { width: 32px; height: 32px; border-radius: 8px; background: var(--strong); color: var(--on-strong); display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 500; }
+.step h3 { font-size: 18px; margin-top: 4px; }
+.step a { font-size: 14px; font-weight: 600; text-underline-offset: 3px; align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; }
+.how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+@media (min-width: 1000px) { .how-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+.how-grid .card { display: flex; flex-direction: column; gap: 6px; }
+.how-grid h3 { font-size: 18px; }
+.metric-row { display: flex; justify-content: space-between; gap: 12px; padding-block: 12px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.metric-row:last-child { border-bottom: 0; }
+.metric-row.head { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding-block: 10px; }
+.metric-row strong { font-weight: 600; }
+
+.site-footer { border-top: 1px solid var(--line); }
+.site-footer p { padding-block: 20px 28px; font-size: 13px; color: var(--muted); }
+
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="brand" href="#forecast">
+      <span class="brand-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 7 12 9.5 6 14.5 18 17 12 22 12"></polyline></svg></span>
+      PermitPulse
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#forecast">Forecast</a>
+      <a href="#saved" id="nav-saved">Saved projects (3)</a>
+      <a href="#how">How it works</a>
+    </nav>
+  </div>
+</header>
+
+<div class="notice">
+  <p class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    <span><strong>Prototype.</strong> Forecast numbers are placeholders until our model is trained on DOB NOW filings.</span>
+  </p>
+</div>
+
+<main class="wrap main">
+
+  <section id="forecast" class="section" aria-labelledby="page-title">
+    <div class="intro">
+      <h1 id="page-title">When will your NYC permit be approved?</h1>
+      <p>Describe the job the way you would file it in DOB NOW. PermitPulse forecasts the approval date from similar past filings, with an honest range and the factors behind it.</p>
+    </div>
+
+    <div class="workbench">
+      <form id="pp-form" class="card form" novalidate>
+        <div class="form-head">
+          <h2>Your project</h2>
+          <p class="tiny muted" id="example-note">An example project is filled in. Change any field, or start over.</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="pp-name">Project name</label>
+          <input class="input" id="pp-name" type="text" autocomplete="off" placeholder="e.g. 214 Bergen St rear extension">
+        </div>
+
+        <fieldset>
+          <legend>Borough</legend>
+          <div class="pills" id="pp-boroughs"></div>
+        </fieldset>
+
+        <div class="field">
+          <label class="label" for="pp-job">Job type</label>
+          <div class="select-wrap">
+            <select class="select" id="pp-job">
+              <option value="Alteration">Alteration</option>
+              <option value="Alteration CO">Alteration CO</option>
+              <option value="New Building">New Building</option>
+              <option value="ALT-CO">ALT-CO: new building, existing elements remain</option>
+              <option value="Full Demolition">Full Demolition</option>
+            </select>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+        </div>
+
+        <fieldset>
+          <legend>Work types</legend>
+          <p class="help">Select every type of work on this filing.</p>
+          <div class="pills" id="pp-works"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Review path</legend>
+          <div class="options" id="pp-reviews"></div>
+        </fieldset>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="label" for="pp-cost">Estimated job cost</label>
+            <div class="money"><span aria-hidden="true">$</span><input class="input" id="pp-cost" type="text" inputmode="numeric" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label class="label" for="pp-filed">Planned filing date</label>
+            <input class="input" id="pp-filed" type="date">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="label" for="pp-bldg">Building type</label>
+            <div class="select-wrap">
+              <select class="select" id="pp-bldg">
+                <option value="1 Family">1 Family</option>
+                <option value="2 Family">2 Family</option>
+                <option value="3 Family">3 Family</option>
+                <option value="Other">Other (multifamily, commercial)</option>
+              </select>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="pp-stories">Stories</label>
+            <input class="input" id="pp-stories" type="number" inputmode="numeric" min="1" max="120">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-accent" id="run-btn">
+            <span id="run-label">Update forecast</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+          <button type="button" class="btn-link" id="reset-btn">Start over</button>
+        </div>
+      </form>
+
+      <div id="result" class="result"></div>
+    </div>
+  </section>
+
+  <section id="saved" class="section" aria-labelledby="saved-title">
+    <div class="intro">
+      <h2 id="saved-title">Saved projects</h2>
+      <p>Open a saved forecast to load it back into the form. Three example projects are preloaded in this prototype.</p>
+    </div>
+    <div class="status" id="saved-status" role="status"></div>
+    <div id="saved-list"></div>
+  </section>
+
+  <section id="how" class="section" aria-labelledby="how-title">
+    <div class="intro">
+      <h2 id="how-title">How the forecast works</h2>
+      <p>PermitPulse learns from New York City's public record of building job filings: when each job was filed, when DOB approved it, and what kind of job it was.</p>
+    </div>
+
+    <div class="steps">
+      <div class="card step">
+        <span class="step-no">1</span>
+        <h3>Data</h3>
+        <p class="small">NYC DOB NOW: Build – Job Application Filings, published on NYC Open Data. About 967,000 filings since 2016.</p>
+        <p class="small muted">We predict the number of days from Filing Date to Approved Date, using initial filings only.</p>
+        <a href="https://data.cityofnewyork.us/d/w9ak-ipjd" target="_blank" rel="noopener">View the dataset</a>
+      </div>
+      <div class="card step">
+        <span class="step-no">2</span>
+        <h3>Model</h3>
+        <p class="small"><strong>Baseline:</strong> the median approval time for the same job type, roughly what DOB averages give people today.</p>
+        <p class="small"><strong>Model:</strong> a regression that predicts the 10th, 50th and 90th percentile approval time from your project's factors, so every forecast comes with a range and a factor breakdown.</p>
+      </div>
+      <div class="card step">
+        <span class="step-no">3</span>
+        <h3>Validation</h3>
+        <p class="small">We train on older filings and test on newer ones, never the reverse, so the test looks like forecasting a real future permit.</p>
+        <p class="small muted">We report the average error in days and how often real approvals land inside our 80% range.</p>
+      </div>
+    </div>
+
+    <div class="how-grid">
+      <div class="card">
+        <h3>Your inputs and the DOB fields behind them</h3>
+        <p class="small muted">Every question on the form maps to a column in the public dataset.</p>
+        <div class="table-wrap">
+          <table class="map-table stack">
+            <thead><tr><th scope="col">Form question</th><th scope="col">DOB NOW column</th><th scope="col">Values</th></tr></thead>
+            <tbody>
+              <tr><td>Borough</td><td data-label="Column">borough</td><td data-label="Values">The five boroughs</td></tr>
+              <tr><td>Job type</td><td data-label="Column">job_type</td><td data-label="Values">Alteration, New Building, Full Demolition and more</td></tr>
+              <tr><td>Work types</td><td data-label="Column">*_work_type</td><td data-label="Values">One yes/no column per work type</td></tr>
+              <tr><td>Review path</td><td data-label="Column">filing_review_type</td><td data-label="Values">Professional Certification or Standard Plan Examination</td></tr>
+              <tr><td>Job cost</td><td data-label="Column">initial_cost</td><td data-label="Values">Dollar amount on the filing</td></tr>
+              <tr><td>Building type</td><td data-label="Column">building_type</td><td data-label="Values">1, 2 or 3 Family, Other</td></tr>
+              <tr><td>Stories</td><td data-label="Column">proposed_no_of_stories</td><td data-label="Values">Stories after the work</td></tr>
+              <tr><td>Filing date</td><td data-label="Column">filing_date</td><td data-label="Values">Starts the clock; captures season and backlog</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Backtest results</h3>
+        <p class="small muted">Filled in after the first model run on held-out recent filings.</p>
+        <div>
+          <div class="metric-row head"><span>Method</span><span>Average error</span></div>
+          <div class="metric-row"><strong>Baseline: job-type median</strong><span class="muted">Pending</span></div>
+          <div class="metric-row"><strong>PermitPulse model</strong><span class="muted">Pending</span></div>
+          <div class="metric-row"><strong>Approvals inside 80% range</strong><span class="muted">Pending (target 80%)</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <p class="wrap">PermitPulse prototype · Data: NYC DOB NOW: Build – Job Application Filings, NYC Open Data</p>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var WORK = {
+    'General Construction': 0.03, 'Plumbing': 0.04, 'Mechanical Systems': 0.06, 'Structural': 0.12,
+    'Foundation': 0.12, 'Earth Work': 0.08, 'Sprinkler': 0.05, 'Standpipe': 0.05,
+    'Sidewalk Shed': -0.25, 'Scaffold': -0.2, 'Solar': 0.02, 'Sign': -0.05, 'Curb Cut': 0.1
+  };
+  var BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
+  var JOB_LABEL = { 'Alteration': 'Alteration', 'Alteration CO': 'Alteration CO', 'New Building': 'New Building', 'ALT-CO': 'ALT-CO (existing elements remain)', 'Full Demolition': 'Full Demolition' };
+  var REVIEWS = [
+    { v: 'Professional Certification', desc: 'Your architect or engineer certifies the plans. DOB may audit the job after approval.' },
+    { v: 'Standard Plan Examination', desc: 'A DOB plan examiner reviews the plans before approval.' }
+  ];
+  var ICON_CHECK = '<svg class="check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  var ICON_SAVE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>';
+  var ICON_TRASH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
+
+  function defaults() {
+    return {
+      name: 'Kitchen and bath renovation, 2-family house', borough: 'Brooklyn', jobType: 'Alteration',
+      works: { 'General Construction': true, 'Plumbing': true, 'Mechanical Systems': true },
+      review: 'Standard Plan Examination', cost: '650000', bldg: '2 Family', stories: '2', filed: '2026-10-19'
+    };
+  }
+  function seed() {
+    return [
+      { id: 's1', inputs: { name: 'Rear extension, 2-family house', borough: 'Brooklyn', jobType: 'Alteration', works: { 'General Construction': true, 'Plumbing': true, 'Structural': true }, review: 'Standard Plan Examination', cost: '450000', bldg: '2 Family', stories: '3', filed: '2026-10-19' } },
+      { id: 's2', inputs: { name: '7-story residential building', borough: 'Queens', jobType: 'New Building', works: { 'General Construction': true, 'Plumbing': true, 'Mechanical Systems': true, 'Structural': true, 'Foundation': true, 'Earth Work': true, 'Sprinkler': true, 'Standpipe': true }, review: 'Standard Plan Examination', cost: '12000000', bldg: 'Other', stories: '7', filed: '2026-09-08' } },
+      { id: 's3', inputs: { name: 'Sidewalk shed for facade repair', borough: 'Manhattan', jobType: 'Alteration', works: { 'Sidewalk Shed': true }, review: 'Professional Certification', cost: '25000', bldg: 'Other', stories: '20', filed: '2026-10-01' } }
+    ];
+  }
+
+  var state = { inputs: defaults(), saved: seed(), ran: true, loadedId: null, justSaved: false, lastDeleted: null, isExample: true };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return isFinite(n) ? n : 0; }
+  function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+  function addDays(iso, n) {
+    var d = new Date(String(iso) + 'T12:00:00');
+    if (isNaN(d.getTime())) d = new Date();
+    d.setDate(d.getDate() + n);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function reduceMotion() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+  function scrollToEl(el) { if (el) el.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); }
+  function narrow() { return window.innerWidth < 960; }
+
+  // Placeholder model: a job-type baseline adjusted by each factor, with a log-normal range.
+  function model(inp) {
+    var baseByJob = { 'Alteration': 30, 'Alteration CO': 70, 'New Building': 100, 'ALT-CO': 90, 'Full Demolition': 50 };
+    var base = baseByJob[inp.jobType] || 40;
+    var steps = [];
+    var cur = base;
+    function apply(label, value, mult) { var next = cur * mult; steps.push({ label: label, value: value, delta: next - cur }); cur = next; }
+    apply('Review path', inp.review, inp.review === 'Professional Certification' ? 0.6 : 1.25);
+    var boro = { 'Manhattan': 1.12, 'Brooklyn': 1.06, 'Queens': 1, 'Bronx': 0.95, 'Staten Island': 0.9 };
+    apply('Borough', inp.borough, boro[inp.borough] || 1);
+    var sum = 0, picked = [], works = inp.works || {};
+    Object.keys(WORK).forEach(function (k) { if (works[k]) { sum += WORK[k]; picked.push(k); } });
+    var scope = picked.length === 0 ? 'No work types selected' : (picked.length <= 3 ? picked.join(', ') : picked.slice(0, 3).join(', ') + ' +' + (picked.length - 3) + ' more');
+    apply('Scope of work', scope, Math.min(1.4, Math.max(0.6, 1 + sum)));
+    var cost = num(inp.cost);
+    apply('Job cost', money(cost), cost < 50000 ? 0.85 : cost < 500000 ? 1 : cost < 5000000 ? 1.15 : 1.3);
+    var stories = Math.max(1, Math.round(num(inp.stories)) || 1);
+    var bm = (inp.bldg === 'Other' ? 1 : 0.93) * (stories <= 3 ? 0.95 : stories <= 6 ? 1 : stories <= 12 ? 1.08 : 1.15);
+    apply('Building', inp.bldg + ' · ' + stories + (stories === 1 ? ' story' : ' stories'), bm);
+    var sigma = 0.5 + (inp.review === 'Standard Plan Examination' ? 0.1 : 0) + (inp.jobType === 'New Building' ? 0.05 : 0);
+    function q(z) { return Math.max(1, Math.round(cur * Math.exp(z * sigma))); }
+    return { base: base, steps: steps, p50: Math.max(1, Math.round(cur)), p10: q(-1.2816), p25: q(-0.6745), p75: q(0.6745), p80: q(0.8416), p90: q(1.2816) };
+  }
+
+  /* ---------- Form ---------- */
+  function buildForm() {
+    $('pp-boroughs').innerHTML = BOROUGHS.map(function (b) {
+      return '<button type="button" class="pill" data-borough="' + esc(b) + '" aria-pressed="false">' + esc(b) + '</button>';
+    }).join('');
+    $('pp-works').innerHTML = Object.keys(WORK).map(function (k) {
+      return '<button type="button" class="pill" data-work="' + esc(k) + '" aria-pressed="false">' + ICON_CHECK + '<span>' + esc(k) + '</span></button>';
+    }).join('');
+    $('pp-reviews').innerHTML = REVIEWS.map(function (r) {
+      return '<button type="button" class="option" data-review="' + esc(r.v) + '" aria-pressed="false"><span class="radio" aria-hidden="true"></span><span class="option-text"><strong>' + esc(r.v) + '</strong><span>' + esc(r.desc) + '</span></span></button>';
+    }).join('');
+
+    $('pp-boroughs').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-borough]'); if (!b) return;
+      change({ borough: b.getAttribute('data-borough') });
+    });
+    $('pp-works').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-work]'); if (!b) return;
+      var k = b.getAttribute('data-work');
+      var w = Object.assign({}, state.inputs.works);
+      w[k] = !w[k];
+      change({ works: w });
+    });
+    $('pp-reviews').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-review]'); if (!b) return;
+      change({ review: b.getAttribute('data-review') });
+    });
+    $('pp-name').addEventListener('input', function (e) { change({ name: e.target.value }); });
+    $('pp-cost').addEventListener('input', function (e) { change({ cost: e.target.value }); });
+    $('pp-stories').addEventListener('input', function (e) { change({ stories: e.target.value }); });
+    $('pp-job').addEventListener('change', function (e) { change({ jobType: e.target.value }); });
+    $('pp-bldg').addEventListener('change', function (e) { change({ bldg: e.target.value }); });
+    $('pp-filed').addEventListener('change', function (e) { change({ filed: e.target.value }); });
+
+    $('pp-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      state.ran = true; state.justSaved = false;
+      syncForm(); renderResult();
+      if (narrow()) { scrollToEl($('result')); }
+      var h = $('result-heading'); if (h) h.focus({ preventScroll: true });
+    });
+    $('reset-btn').addEventListener('click', function () {
+      var d = defaults(); d.name = '';
+      state.inputs = d; state.loadedId = null; state.ran = false; state.justSaved = false; state.isExample = false;
+      syncForm(); renderResult(); renderSaved();
+      scrollToEl($('forecast'));
+      $('pp-name').focus({ preventScroll: true });
+    });
+  }
+
+  function change(patch) {
+    Object.assign(state.inputs, patch);
+    state.justSaved = false;
+    syncForm();
+    renderResult();
+  }
+
+  function syncForm() {
+    var inp = state.inputs;
+    function setVal(id, v) { var el = $(id); if (el.value !== String(v)) el.value = v; }
+    setVal('pp-name', inp.name || '');
+    setVal('pp-cost', inp.cost || '');
+    setVal('pp-stories', inp.stories || '');
+    setVal('pp-job', inp.jobType);
+    setVal('pp-bldg', inp.bldg);
+    setVal('pp-filed', inp.filed || '');
+    document.querySelectorAll('[data-borough]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-borough') === inp.borough)); });
+    document.querySelectorAll('[data-work]').forEach(function (b) { b.setAttribute('aria-pressed', String(!!(inp.works && inp.works[b.getAttribute('data-work')]))); });
+    document.querySelectorAll('[data-review]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-review') === inp.review)); });
+    $('run-label').textContent = state.ran ? 'Update forecast' : 'Forecast approval date';
+    $('example-note').hidden = !state.isExample;
+  }
+
+  /* ---------- Result ---------- */
+  function labelPos(pct) { return pct < 18 ? 'at-start' : pct > 82 ? 'at-end' : 'at-mid'; }
+
+  function renderResult() {
+    var box = $('result');
+    if (!state.ran) {
+      box.innerHTML =
+        '<div class="card empty">' +
+          '<div><h2>Your forecast will appear here</h2><p class="muted" style="margin-top:6px">Fill in the project details and press Forecast approval date.</p></div>' +
+          '<ul class="benefits">' +
+            '<li><span class="benefit-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span><span><strong>A likely approval date</strong><span class="small muted">With an honest range, not a single guess.</span></span></li>' +
+            '<li><span class="benefit-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="14" y2="12"></line><line x1="4" y1="18" x2="17" y2="18"></line></svg></span><span><strong>What is driving it</strong><span class="small muted">See which parts of your job add or save days.</span></span></li>' +
+            '<li><span class="benefit-icon" aria-hidden="true">' + ICON_SAVE + '</span><span><strong>Saved for next time</strong><span class="small muted">Reopen a forecast when plans change.</span></span></li>' +
+          '</ul>' +
+        '</div>';
+      return;
+    }
+
+    var inp = state.inputs;
+    var mm = model(inp);
+    var cost = num(inp.cost);
+    var name = (inp.name || '').trim() || 'Untitled project';
+    var loadedExists = state.saved.some(function (p) { return p.id === state.loadedId; });
+
+    // range chart scale
+    var max = Math.ceil(Math.max(mm.p90, mm.base) * 1.1 / 10) * 10;
+    function pct(x) { return Math.round(x / max * 1000) / 10; }
+    var r = { p10: pct(mm.p10), p90: pct(mm.p90), p25: pct(mm.p25), p75: pct(mm.p75), p50: pct(mm.p50), base: pct(mm.base) };
+
+    // drivers
+    var maxAbs = 1;
+    mm.steps.forEach(function (s) { maxAbs = Math.max(maxAbs, Math.abs(s.delta)); });
+    var drivers = mm.steps.map(function (s) {
+      var d = Math.round(s.delta);
+      var w = Math.round(Math.abs(s.delta) / maxAbs * 500) / 10;
+      var slower = s.delta > 0;
+      var left = slower ? 50 : Math.round((50 - w) * 10) / 10;
+      var text = d === 0 ? 'No change' : (d > 0 ? '+' + d + ' days' : '−' + Math.abs(d) + ' days');
+      var cls = d === 0 ? 'val-none' : (slower ? 'val-add' : 'val-save');
+      return '<div class="driver"><div class="driver-label"><strong>' + esc(s.label) + '</strong><span>' + esc(s.value) + '</span></div>' +
+        '<div class="driver-bar" aria-hidden="true"><span class="' + (slower ? 'bar-add' : 'bar-save') + '" style="left:' + left + '%;width:' + w + '%"></span></div>' +
+        '<div class="driver-value num ' + cls + '">' + text + '</div></div>';
+    }).join('');
+
+    // what-if
+    var altReview = inp.review === 'Professional Certification' ? 'Standard Plan Examination' : 'Professional Certification';
+    var alt = model(Object.assign({}, inp, { review: altReview }));
+    var diff = alt.p50 - mm.p50;
+    var altNote = altReview === 'Professional Certification'
+      ? 'Your architect or engineer certifies code compliance and DOB can audit the job later, so weigh the time saved against audit risk.'
+      : 'A DOB plan examiner reviews the plans before approval. Slower, but objections come up front instead of in an audit.';
+
+    var chips = [inp.borough, JOB_LABEL[inp.jobType] || inp.jobType, inp.review, money(cost), 'Filing ' + addDays(inp.filed, 0)];
+    var aria = 'Forecast range: 8 in 10 similar filings approved between ' + mm.p10 + ' and ' + mm.p90 + ' days; most likely ' + mm.p50 + ' days. DOB typical for this job type: ' + mm.base + ' days.';
+
+    $('result').innerHTML =
+      '<div class="result-head">' +
+        '<div class="result-title"><h2 id="result-heading" tabindex="-1">' + esc(name) + '</h2>' +
+          '<ul class="chips">' + chips.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>' +
+        '<div class="result-actions">' +
+          (state.justSaved ? '<span class="saved-msg" role="status"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>Saved · <a href="#saved">View</a></span>' : '') +
+          '<button type="button" class="btn btn-strong btn-sm" id="save-btn">' + ICON_SAVE + (loadedExists ? 'Update saved project' : 'Save project') + '</button>' +
+        '</div>' +
+      '</div>' +
+
+      '<section class="card" aria-label="Forecast">' +
+        '<div class="hero-grid">' +
+          '<div class="hero-main">' +
+            '<span class="tag">Placeholder numbers</span>' +
+            '<div class="kicker">Most likely approval date</div>' +
+            '<div class="big">' + addDays(inp.filed, mm.p50) + '</div>' +
+            '<p>About <strong>' + mm.p50 + ' days</strong> after filing on ' + addDays(inp.filed, 0) + '.</p>' +
+            '<p class="small muted">8 in 10 similar filings would be approved between ' + addDays(inp.filed, mm.p10) + ' and ' + addDays(inp.filed, mm.p90) + ' (' + mm.p10 + ' to ' + mm.p90 + ' days).</p>' +
+          '</div>' +
+          '<div class="hero-side">' +
+            '<div class="kicker">Safe date to schedule your crew</div>' +
+            '<div class="mid">' + addDays(inp.filed, mm.p80) + '</div>' +
+            '<p class="small">80% chance of approval by then (' + mm.p80 + ' days after filing).</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="range">' +
+          '<div class="legend"><strong style="font-weight:600">Forecast range, days after filing</strong>' +
+            '<span class="legend-keys"><span class="key"><span class="swatch" style="background:var(--band-50)"></span>Middle 50%</span><span class="key"><span class="swatch" style="background:var(--band-80)"></span>8 in 10</span><span class="key"><span class="swatch-dash"></span>DOB typical</span></span></div>' +
+          '<div class="plot" role="img" aria-label="' + esc(aria) + '">' +
+            '<div class="plot-track"></div>' +
+            '<div class="plot-band band-80" style="left:' + r.p10 + '%;width:' + Math.round((r.p90 - r.p10) * 10) / 10 + '%"></div>' +
+            '<div class="plot-band band-50" style="left:' + r.p25 + '%;width:' + Math.round((r.p75 - r.p25) * 10) / 10 + '%"></div>' +
+            '<div class="plot-base" style="left:' + r.base + '%"></div>' +
+            '<div class="plot-mark" style="left:' + r.p50 + '%"></div>' +
+            '<div class="plot-label top ' + labelPos(r.p50) + '" style="left:' + r.p50 + '%">Likely · ' + mm.p50 + ' days</div>' +
+            '<div class="plot-label bottom ' + labelPos(r.base) + '" style="left:' + r.base + '%">DOB typical · ' + mm.base + ' days</div>' +
+          '</div>' +
+          '<div class="axis" aria-hidden="true"><span style="left:0">0</span><span class="at-mid" style="left:50%">' + Math.round(max / 2) + '</span><span style="right:0">' + max + ' days</span></div>' +
+        '</div>' +
+      '</section>' +
+
+      '<section class="card" aria-labelledby="drivers-title">' +
+        '<div class="drivers-head"><div><h2 id="drivers-title">What is driving this forecast</h2><p class="small muted">Starting from a typical filing of this job type, each factor adds or saves days.</p></div>' +
+          '<span class="legend-keys tiny muted"><span class="key"><span class="swatch" style="background:var(--save)"></span>Saves days</span><span class="key"><span class="swatch" style="background:var(--add)"></span>Adds days</span></span></div>' +
+        '<div class="driver base"><div class="driver-label"><strong>Typical ' + esc(JOB_LABEL[inp.jobType] || inp.jobType) + ' filing</strong><span>Starting point (DOB typical)</span></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + mm.base + ' days</div></div>' +
+        drivers +
+        '<div class="driver total"><div class="driver-label"><strong>Your forecast</strong></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + mm.p50 + ' days</div></div>' +
+      '</section>' +
+
+      '<div class="pair">' +
+        '<section class="card" aria-labelledby="whatif-title">' +
+          '<h2 id="whatif-title">Try a change</h2>' +
+          '<p><strong style="font-weight:600">File under ' + esc(altReview) + '</strong></p>' +
+          '<p>Likely ' + alt.p50 + ' days instead of ' + mm.p50 + ' (' + (diff < 0 ? Math.abs(diff) + ' days sooner' : diff + ' days later') + ').</p>' +
+          '<p class="small muted">' + esc(altNote) + '</p>' +
+          '<div><button type="button" class="btn btn-outline btn-sm" id="apply-btn">Apply this change</button></div>' +
+        '</section>' +
+        '<section class="card" aria-labelledby="vs-title">' +
+          '<h2 id="vs-title">Forecast vs. the DOB average</h2>' +
+          '<div class="tiles">' +
+            '<div class="tile"><span class="tiny muted">DOB typical</span><span class="num">' + mm.base + ' days</span><span class="tiny muted">Same job type</span></div>' +
+            '<div class="tile"><span class="tiny muted">PermitPulse</span><span class="num">' + mm.p50 + ' days</span><span class="tiny muted">Your project</span></div>' +
+          '</div>' +
+          '<p class="small muted">Backtest accuracy: pending first model run.</p>' +
+        '</section>' +
+      '</div>';
+
+    $('save-btn').addEventListener('click', save);
+    $('apply-btn').addEventListener('click', function () {
+      change({ review: altReview });
+      var b = $('apply-btn'); if (b) b.focus({ preventScroll: true });
+    });
+  }
+
+  function save() {
+    var list = state.saved.slice();
+    var inputs = clone(state.inputs);
+    var id = state.loadedId, idx = -1;
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) idx = i; }
+    if (idx >= 0) { list[idx] = { id: id, inputs: inputs }; }
+    else { id = 'p' + Date.now(); list.unshift({ id: id, inputs: inputs }); }
+    state.saved = list; state.loadedId = id; state.justSaved = true; state.lastDeleted = null;
+    renderResult(); renderSaved();
+    var b = $('save-btn'); if (b) b.focus({ preventScroll: true });
+  }
+
+  /* ---------- Saved projects ---------- */
+  function renderSaved() {
+    $('nav-saved').textContent = 'Saved projects (' + state.saved.length + ')';
+    var status = $('saved-status');
+    if (state.lastDeleted) {
+      status.innerHTML = '<span>Deleted “' + esc((state.lastDeleted.item.inputs.name || '').trim() || 'Untitled project') + '”.</span><button type="button" class="btn-link" id="undo-btn">Undo</button>';
+      $('undo-btn').addEventListener('click', function () {
+        var d = state.lastDeleted; if (!d) return;
+        var list = state.saved.slice(); list.splice(Math.min(d.index, list.length), 0, d.item);
+        state.saved = list; state.lastDeleted = null;
+        renderSaved(); renderResult();
+      });
+    } else {
+      status.innerHTML = '';
+    }
+
+    if (state.saved.length === 0) {
+      $('saved-list').innerHTML = '<div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding-block:40px">' +
+        '<h3 style="font-size:18px">No saved projects yet</h3><p class="muted">Run a forecast and press Save project to keep it here.</p>' +
+        '<a class="btn btn-accent btn-sm" href="#forecast">Start a forecast</a></div>';
+      return;
+    }
+
+    var rows = state.saved.map(function (p) {
+      var pm = model(p.inputs);
+      var nm = (p.inputs.name || '').trim() || 'Untitled project';
+      return '<tr>' +
+        '<td class="name">' + esc(nm) + '</td>' +
+        '<td data-label="Borough">' + esc(p.inputs.borough) + '</td>' +
+        '<td data-label="Job type">' + esc(JOB_LABEL[p.inputs.jobType] || p.inputs.jobType) + '</td>' +
+        '<td data-label="Filing date">' + addDays(p.inputs.filed, 0) + '</td>' +
+        '<td data-label="Likely approval" class="likely">' + addDays(p.inputs.filed, pm.p50) + '</td>' +
+        '<td data-label="8 in 10 range" class="range-cell">' + pm.p10 + '–' + pm.p90 + ' days</td>' +
+        '<td class="actions"><div class="row-actions">' +
+          '<button type="button" class="btn btn-strong btn-sm" data-open="' + esc(p.id) + '">Open</button>' +
+          '<button type="button" class="btn btn-outline btn-sm btn-icon" data-del="' + esc(p.id) + '" aria-label="Delete ' + esc(nm) + '">' + ICON_TRASH + '</button>' +
+        '</div></td>' +
+      '</tr>';
+    }).join('');
+
+    $('saved-list').innerHTML =
+      '<div class="card saved-card"><div class="table-wrap"><table class="saved-table stack">' +
+        '<thead><tr><th scope="col">Project</th><th scope="col">Borough</th><th scope="col">Job type</th><th scope="col">Filing date</th><th scope="col">Likely approval</th><th scope="col">8 in 10 range</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table></div></div>';
+  }
+
+  function bindSaved() {
+    $('saved-list').addEventListener('click', function (e) {
+      var open = e.target.closest('[data-open]');
+      var del = e.target.closest('[data-del]');
+      if (open) {
+        var id = open.getAttribute('data-open');
+        var p = state.saved.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+        state.inputs = clone(p.inputs); state.loadedId = p.id; state.ran = true; state.justSaved = false; state.isExample = false;
+        syncForm(); renderResult();
+        scrollToEl(narrow() ? $('result') : $('forecast'));
+        var h = $('result-heading'); if (h) h.focus({ preventScroll: true });
+      } else if (del) {
+        var did = del.getAttribute('data-del');
+        var index = -1;
+        state.saved.forEach(function (x, i) { if (x.id === did) index = i; });
+        if (index < 0) return;
+        state.lastDeleted = { item: state.saved[index], index: index };
+        state.saved = state.saved.filter(function (x) { return x.id !== did; });
+        if (state.loadedId === did) state.loadedId = null;
+        renderSaved(); renderResult();
+        var u = $('undo-btn'); if (u) u.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  // In-page links scroll inside the page
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]'); if (!a) return;
+    var t = document.getElementById(a.getAttribute('href').slice(1));
+    if (t) { e.preventDefault(); scrollToEl(t); }
+  });
+
+  buildForm();
+  bindSaved();
+  syncForm();
+  renderResult();
+  renderSaved();
+})();
+</script>
+
+</body>
+</html>
