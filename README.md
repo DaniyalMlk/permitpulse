@@ -14,8 +14,8 @@ Clickable MVP. Forecast numbers are placeholders until the model is trained.
 ## Repo layout
 
 - `index.html` – clickable prototype, served by GitHub Pages
-- `db/schema.sql` – database tables, the `predict_days()` function and row level security (Supabase / Postgres)
-- `db/seed.sql` – sample data: the first regression model, 2,000 training filings, and example users, projects and forecasts
+- `db/schema.sql` – database tables (Supabase / Postgres)
+- `db/seed.sql` – sample data: our regression model, 2,000 training filings, example users, projects and forecasts
 - `hello.py` – team hello-world (each member added their name through a pull request)
 
 ## Database
