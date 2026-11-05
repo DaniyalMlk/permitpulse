@@ -90,13 +90,7 @@ a { color: inherit; }
 .nav { display: flex; align-items: center; gap: 4px; }
 .nav a { min-height: 40px; padding-inline: 12px; display: inline-flex; align-items: center; color: var(--on-band-muted); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; transition: color 0.15s, background-color 0.15s; }
 .nav a:hover { color: var(--on-band); background: rgba(255, 255, 255, 0.07); }
-.live { display: inline-flex; align-items: center; gap: 8px; margin-left: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16); font-size: 13px; font-weight: 600; color: var(--on-band-muted); white-space: nowrap; }
-.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--on-band-muted); position: relative; }
-.live.ok i { background: #6EE7A0; }
-.live.ok i::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #6EE7A0; opacity: 0; animation: ping 2.4s ease-out 3; }
-.live.bad i { background: #F97066; }
-@keyframes ping { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }
-@media (max-width: 720px) { .nav a:not(#nav-saved) { display: none; } .live span { display: none; } .live { padding: 8px; margin-left: 0; } }
+@media (max-width: 720px) { .nav a:not(#nav-saved) { display: none; } }
 
 /* ---------- Hero band ---------- */
 .band { position: relative; overflow: hidden; background: var(--band-bg); color: var(--on-band); }
@@ -403,10 +397,6 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
 .footer-row strong { color: var(--ink); }
 .footer-row a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
 .foot-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
-.db { display: inline-flex; align-items: center; gap: 8px; }
-.db::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
-.db.ok::before { background: var(--save); }
-.db.bad::before { background: var(--bad); }
 
 /* ---------- Page load sequence ---------- */
 @keyframes wordUp { from { transform: translateY(105%); } }
@@ -436,7 +426,6 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
       <a href="#forecast">Forecast</a>
       <a href="#saved" id="nav-saved">Saved projects</a>
       <a href="#how">How it works</a>
-      <span class="live" id="db-pill" title="Database status"><i aria-hidden="true"></i><span id="db-pill-text">Connecting</span></span>
     </nav>
   </div>
 </header>
@@ -640,7 +629,6 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
     <p><strong>PermitPulse</strong>, built by Daniyal, Walter, Allan, Jiayi and Justin for NYU TECH-UB 24.</p>
     <div class="foot-links">
       <a href="https://github.com/DaniyalMlk/permitpulse" target="_blank" rel="noopener">Source on GitHub</a>
-      <p class="db" id="db-wrap"><span id="db-status">Checking the database…</span></p>
     </div>
   </div>
 </footer>
@@ -819,24 +807,6 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
     }, function (err) {
       state.savedError = err.message;
     }).then(function () { state.savedLoading = false; renderSaved(); });
-  }
-
-  function setStatus(ok, text) {
-    $('db-wrap').className = 'db ' + (ok ? 'ok' : 'bad');
-    $('db-status').textContent = text;
-    $('db-pill').className = 'live ' + (ok ? 'ok' : 'bad');
-    $('db-pill-text').textContent = ok ? 'Database live' : 'Offline';
-  }
-
-  function checkHealth() {
-    return api('/api/health').then(function (h) {
-      var ok = h.database === 'connected';
-      setStatus(ok, ok ? 'Connected to the database' : 'Database not connected');
-      return h;
-    }, function (err) {
-      setStatus(false, 'Server not reachable');
-      throw err;
-    });
   }
 
   /* ---------- Form ---------- */
@@ -1121,7 +1091,7 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
       out.textContent = 'Sending a request…';
       arch.classList.remove('run'); void arch.offsetWidth; arch.classList.add('run');
       var t0 = performance.now();
-      checkHealth().then(function (h) {
+      api('/api/health').then(function (h) {
         var ms = Math.round(performance.now() - t0);
         out.innerHTML = 'Round trip in <strong>' + fmtMs(ms) + '</strong>. ' +
           (h.database === 'connected' ? 'Database connected, <strong>' + h.saved_projects + '</strong> saved projects.' : 'The database did not answer.');
@@ -1150,7 +1120,6 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
   renderSaved();
   runForecast(false);
   loadSaved();
-  checkHealth().catch(function () {});
 })();
 </script>
 </body>
