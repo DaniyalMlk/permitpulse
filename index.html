@@ -4,320 +4,351 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="PermitPulse forecasts when an NYC construction permit will be approved.">
+<meta name="theme-color" content="#1E3B2C">
 <title>PermitPulse</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: a two-column workbench (project form | live forecast) on laptops, one column on phones; tables turn into stacked rows below 800px */
+/*
+  Look: NYC job site. Sidewalk-shed green for the brand band, hi-vis amber for the one thing
+  that matters (the most likely date), quiet paper and ink everywhere else.
+  Type: Overpass (descended from US highway signage) for headings and dates,
+  Public Sans (the US government's typeface) for everything you read.
+*/
 :root {
-  --bg: #EEF0EF;
+  --paper: #F3F5F2;
   --surface: #FFFFFF;
-  --surface-2: #F4F5F4;
-  --fg: #16191D;
-  --muted: #525A63;
-  --line: #D7DBDB;
-  --line-strong: #858D93;
-  --accent: #C2410C;
-  --on-accent: #FFFFFF;
-  --strong: #16191D;
-  --on-strong: #FFFFFF;
-  --hdr-bg: #16191D;
-  --hdr-fg: #FFFFFF;
-  --hdr-muted: #C2C8CE;
-  --notice: #E2E5E4;
-  --save: #2B6CB0;
-  --save-text: #1D4F8C;
-  --add: #DD6B20;
-  --add-text: #A3360A;
-  --band-track: #E6E9E8;
-  --band-80: #CBD1D3;
-  --band-50: #8D979F;
-  --ok: #1F6B3A;
-  --focus: #1D4F8C;
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --surface-2: #F1F4F0;
+  --ink: #15201A;
+  --muted: #56625B;
+  --line: #DDE3DD;
+  --line-strong: #9AA59E;
+  --band-bg: #1E3B2C;
+  --on-band: #FFFFFF;
+  --on-band-muted: #BCCFC2;
+  --primary: #1E3B2C;
+  --primary-hover: #2A5240;
+  --on-primary: #FFFFFF;
+  --tint: #E4EEE7;
+  --amber: #F2A900;
+  --amber-tint: #FDF3D7;
+  --save: #2F7A55;
+  --save-text: #23603F;
+  --add: #C9661A;
+  --add-text: #9A4A0E;
+  --band: #CFE2D5;
+  --track: #E6EBE6;
+  --ok: #23603F;
+  --bad: #B42318;
+  --focus: #1F6F4A;
+  --shadow: 0 1px 2px rgba(21, 32, 26, 0.05), 0 12px 32px -18px rgba(21, 32, 26, 0.28);
+  --font-display: 'Overpass', 'Public Sans', system-ui, sans-serif;
+  --font-body: 'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #111316; --surface: #1A1D21; --surface-2: #22262B; --fg: #E8EBED; --muted: #A4ACB4;
-    --line: #30353B; --line-strong: #6C757E; --accent: #F0813F; --on-accent: #16191D;
-    --strong: #E8EBED; --on-strong: #16191D; --hdr-bg: #0A0B0D; --hdr-fg: #FFFFFF; --hdr-muted: #AEB5BC;
-    --notice: #1A1D21; --save: #5B9BE0; --save-text: #8DBBF0; --add: #E8803F; --add-text: #F4A06B;
-    --band-track: #22262B; --band-80: #3B434C; --band-50: #6E7984; --ok: #6CC48A; --focus: #8DBBF0;
+    --paper: #0E1411; --surface: #151E19; --surface-2: #1B2620; --ink: #E6ECE8; --muted: #A1AEA6;
+    --line: #26332C; --line-strong: #4E5D55; --band-bg: #13261C; --on-band-muted: #9FB7A8;
+    --primary: #5FB98A; --primary-hover: #77C99D; --on-primary: #0E1411; --tint: #1D3328;
+    --amber: #F2B53A; --amber-tint: #2E2614; --save: #5FB98A; --save-text: #7FD0A6;
+    --add: #E08A3C; --add-text: #F0A764; --band: #2A4A39; --track: #1F2A24; --ok: #7FD0A6;
+    --bad: #F97066; --focus: #8FD3AE; --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #111316; --surface: #1A1D21; --surface-2: #22262B; --fg: #E8EBED; --muted: #A4ACB4;
-  --line: #30353B; --line-strong: #6C757E; --accent: #F0813F; --on-accent: #16191D;
-  --strong: #E8EBED; --on-strong: #16191D; --hdr-bg: #0A0B0D; --hdr-fg: #FFFFFF; --hdr-muted: #AEB5BC;
-  --notice: #1A1D21; --save: #5B9BE0; --save-text: #8DBBF0; --add: #E8803F; --add-text: #F4A06B;
-  --band-track: #22262B; --band-80: #3B434C; --band-50: #6E7984; --ok: #6CC48A; --focus: #8DBBF0;
+  --paper: #0E1411; --surface: #151E19; --surface-2: #1B2620; --ink: #E6ECE8; --muted: #A1AEA6;
+  --line: #26332C; --line-strong: #4E5D55; --band-bg: #13261C; --on-band-muted: #9FB7A8;
+  --primary: #5FB98A; --primary-hover: #77C99D; --on-primary: #0E1411; --tint: #1D3328;
+  --amber: #F2B53A; --amber-tint: #2E2614; --save: #5FB98A; --save-text: #7FD0A6;
+  --add: #E08A3C; --add-text: #F0A764; --band: #2A4A39; --track: #1F2A24; --ok: #7FD0A6;
+  --bad: #F97066; --focus: #8FD3AE; --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; -webkit-text-size-adjust: 100%; }
-h1, h2, h3 { text-wrap: balance; margin: 0; font-weight: 600; }
-p { margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+h1, h2, h3 { margin: 0; font-family: var(--font-display); font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
+p, ol, dl, dd { margin: 0; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.num { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
 .small { font-size: 14px; }
-.tiny { font-size: 13px; }
-.wrap { max-width: 1200px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 32px); }
+.wrap { max-width: 1200px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 40px); }
 
-/* Header */
-.site-header { background: var(--hdr-bg); color: var(--hdr-fg); }
-.header-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 16px; padding-block: 6px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--hdr-fg); text-decoration: none; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
-.brand-mark { width: 30px; height: 30px; border-radius: 7px; background: var(--accent); color: var(--on-accent); display: inline-flex; align-items: center; justify-content: center; }
-.nav { display: flex; flex-wrap: wrap; margin-inline: -10px; }
-.nav a { min-height: 44px; padding-inline: 10px; display: inline-flex; align-items: center; color: var(--hdr-muted); font-size: 14px; font-weight: 500; text-decoration: none; }
-.nav a:hover { color: var(--hdr-fg); text-decoration: underline; text-underline-offset: 4px; }
-.notice { background: var(--notice); border-bottom: 1px solid var(--line); }
-.notice p { display: flex; gap: 8px; align-items: flex-start; padding-block: 10px; font-size: 13px; color: var(--muted); }
-.notice svg { flex: none; margin-top: 2px; }
-.notice strong { color: var(--fg); font-weight: 600; }
+/* Brand band */
+.band { background: var(--band-bg); color: var(--on-band); }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 24px; padding-block: 10px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--on-band); text-decoration: none; font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.brand-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--amber); color: #15201A; display: inline-flex; align-items: center; justify-content: center; }
+.nav { display: flex; flex-wrap: wrap; margin-inline: -12px; }
+.nav a { min-height: 44px; padding-inline: 12px; display: inline-flex; align-items: center; color: var(--on-band-muted); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; }
+.nav a:hover { color: var(--on-band); }
+.hero { padding-block: clamp(28px, 6vw, 56px) 112px; display: flex; flex-direction: column; gap: 14px; }
+.hero h1 { font-size: clamp(34px, 6vw, 56px); font-weight: 800; line-height: 1.04; letter-spacing: -0.025em; max-width: 15ch; }
+.hero p { color: var(--on-band-muted); font-size: clamp(16px, 2vw, 18px); max-width: 58ch; }
+.hero .notice { display: inline-flex; align-items: flex-start; gap: 10px; align-self: flex-start; margin-top: 6px; padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--on-band-muted); font-size: 13px; max-width: 72ch; }
+@media (min-width: 980px) {
+  .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "title text" "title notice"; column-gap: 64px; row-gap: 16px; align-items: end; }
+  .hero h1 { grid-area: title; }
+  .hero > p:not(.notice) { grid-area: text; }
+  .hero .notice { grid-area: notice; margin-top: 0; }
+}
+.notice .dot { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--amber); }
+.notice strong { color: var(--on-band); font-weight: 600; }
 
 /* Page */
-.main { display: flex; flex-direction: column; gap: 56px; padding-block: 32px 48px; }
+.main { display: flex; flex-direction: column; gap: clamp(56px, 8vw, 88px); padding-bottom: 56px; }
 section[id] { scroll-margin-top: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: clamp(20px, 3.5vw, 28px); box-shadow: var(--shadow); min-width: 0; }
 .section { display: flex; flex-direction: column; gap: 20px; }
-.intro { max-width: 720px; display: flex; flex-direction: column; gap: 8px; }
-.intro h1 { font-size: clamp(26px, 5vw, 34px); line-height: 1.15; letter-spacing: -0.015em; }
-.intro h2 { font-size: clamp(22px, 4vw, 26px); line-height: 1.2; letter-spacing: -0.01em; }
-.intro p { color: var(--muted); max-width: 65ch; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: clamp(18px, 4vw, 28px); min-width: 0; }
+.section-head { display: flex; flex-direction: column; gap: 6px; max-width: 64ch; }
+.section-head h2 { font-size: clamp(24px, 3.5vw, 30px); letter-spacing: -0.02em; }
+.section-head p { color: var(--muted); }
 
-/* Workbench */
-.workbench { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
-@media (min-width: 960px) { .workbench { grid-template-columns: minmax(340px, 400px) minmax(0, 1fr); } }
+/* Workbench: form beside the forecast, overlapping the band */
+.workbench { margin-top: -80px; position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (min-width: 980px) { .workbench { grid-template-columns: minmax(360px, 420px) minmax(0, 1fr); } }
 
 /* Form */
-.form { display: flex; flex-direction: column; gap: 22px; }
-.form-head { display: flex; flex-direction: column; gap: 4px; }
-.form-head h2 { font-size: 18px; }
+.form { display: flex; flex-direction: column; padding: 0; }
+.form-head { padding: 24px 28px 20px; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--line); }
+.form-head h2 { font-size: 20px; }
+.form-head p { font-size: 14px; color: var(--muted); }
+.group { padding: 22px 28px; display: flex; flex-direction: column; gap: 20px; border-bottom: 1px solid var(--line); }
+@media (max-width: 480px) { .form-head, .group, .form-actions { padding-inline: 20px !important; } }
 .field { min-width: 0; }
-.label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.label, legend { display: block; padding: 0; margin-bottom: 8px; font-size: 14px; font-weight: 600; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-legend { padding: 0; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
 .help { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
-.input, .select { width: 100%; height: 46px; padding-inline: 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--fg); font-family: var(--font-sans); font-size: 16px; }
+.input, .select { width: 100%; height: 46px; padding-inline: 13px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 16px; transition: border-color 0.15s, box-shadow 0.15s; }
+.input:hover, .select:hover { border-color: var(--muted); }
+.input:focus, .select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--tint); }
 .input[type="date"] { -webkit-appearance: none; appearance: none; display: flex; align-items: center; min-width: 0; }
 .input::placeholder { color: var(--muted); opacity: 1; }
 .select-wrap { position: relative; }
 .select { -webkit-appearance: none; appearance: none; padding-right: 40px; cursor: pointer; }
-.select-wrap svg { position: absolute; right: 14px; top: 14px; pointer-events: none; }
+.select-wrap svg { position: absolute; right: 14px; top: 14px; pointer-events: none; color: var(--muted); }
 .money { position: relative; }
-.money span { position: absolute; left: 12px; top: 0; height: 46px; display: flex; align-items: center; color: var(--muted); }
-.money .input { padding-left: 26px; }
-.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; }
+.money span { position: absolute; left: 13px; top: 0; height: 46px; display: flex; align-items: center; color: var(--muted); }
+.money .input { padding-left: 27px; }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
 .pills { display: flex; flex-wrap: wrap; gap: 8px; }
-.pill { min-height: 44px; padding-inline: 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--fg); font-family: var(--font-sans); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.pill { min-height: 40px; padding-inline: 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+.pill:hover { border-color: var(--primary); }
 .pill .check { display: none; }
-.pill[aria-pressed="true"] { background: var(--strong); border-color: var(--strong); color: var(--on-strong); }
+.pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .pill[aria-pressed="true"] .check { display: inline-block; }
-.options { display: flex; flex-direction: column; gap: 10px; }
-.option { width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); color: var(--fg); font-family: var(--font-sans); font-size: 15px; cursor: pointer; }
-.option[aria-pressed="true"] { border-color: var(--strong); background: var(--surface-2); }
-.radio { flex: none; width: 18px; height: 18px; margin-top: 3px; border-radius: 50%; border: 2px solid var(--fg); display: inline-flex; align-items: center; justify-content: center; }
-.radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: transparent; }
-.option[aria-pressed="true"] .radio::after { background: var(--fg); }
+.options { display: grid; gap: 10px; }
+.option { width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 15px; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; }
+.option:hover { border-color: var(--primary); }
+.option[aria-pressed="true"] { border-color: var(--primary); background: var(--tint); box-shadow: inset 0 0 0 1px var(--primary); }
+.radio { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; }
+.radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+.option[aria-pressed="true"] .radio { border-color: var(--primary); }
+.option[aria-pressed="true"] .radio::after { background: var(--primary); }
 .option-text { display: flex; flex-direction: column; gap: 2px; }
 .option-text strong { font-weight: 600; }
 .option-text span { font-size: 13px; color: var(--muted); }
-.form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border-top: 1px solid var(--line); padding-top: 20px; }
+.form-actions { padding: 20px 28px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 
 /* Buttons */
-.btn { min-height: 46px; padding-inline: 18px; border-radius: 10px; border: 1px solid transparent; font-family: var(--font-sans); font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; }
-.btn-accent { background: var(--accent); color: var(--on-accent); }
-.btn-strong { background: var(--strong); color: var(--on-strong); }
-.btn-outline { background: var(--surface); color: var(--fg); border-color: var(--line-strong); }
-.btn-sm { min-height: 44px; padding-inline: 14px; font-size: 14px; border-radius: 8px; }
-.btn-icon { width: 44px; padding: 0; }
-.btn-link { min-height: 44px; padding-inline: 6px; background: none; border: 0; color: var(--fg); font-family: var(--font-sans); font-size: 14px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.btn { min-height: 46px; padding-inline: 20px; border-radius: 10px; border: 1px solid transparent; font-family: var(--font-body); font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; transition: background-color 0.15s, border-color 0.15s; }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.btn-primary { background: var(--primary); color: var(--on-primary); }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-outline { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+.btn-outline:hover:not(:disabled) { border-color: var(--ink); }
+.btn-sm { min-height: 40px; padding-inline: 14px; font-size: 14px; }
+.btn-icon { width: 40px; padding: 0; color: var(--muted); }
+.btn-icon:hover:not(:disabled) { color: var(--bad); border-color: var(--bad); }
+.btn-link { min-height: 44px; padding-inline: 8px; background: none; border: 0; color: var(--muted); font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.btn-link:hover { color: var(--ink); }
+.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
 
-/* Result */
+/* Result column */
 .result { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.empty { border-style: dashed; border-color: var(--line-strong); display: flex; flex-direction: column; gap: 20px; }
-.empty h2 { font-size: 22px; }
-.benefits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
-.benefits li { display: flex; gap: 12px; }
-.benefit-icon { flex: none; width: 36px; height: 36px; border-radius: 8px; background: var(--surface-2); display: inline-flex; align-items: center; justify-content: center; }
-.benefits strong { display: block; font-weight: 600; }
-.result-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 16px; }
-.result-title { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-.result-title h2 { font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+.state { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-height: 240px; justify-content: center; }
+.state h2 { font-size: 22px; }
+.state.loading h2 { display: inline-flex; align-items: center; gap: 12px; }
+.state.empty { border-style: dashed; box-shadow: none; }
+.state.error h2 { color: var(--bad); }
+.stale { padding: 12px 16px; border-radius: 12px; background: var(--amber-tint); border: 1px solid var(--amber); font-size: 14px; }
+.result-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 16px; padding: 20px clamp(20px, 4vw, 36px); border-bottom: 1px solid var(--line); }
+.result-title { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.result-title h2 { font-size: 20px; letter-spacing: -0.015em; overflow-wrap: anywhere; }
 .result-title h2:focus { outline: none; }
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.chips li { padding: 3px 10px; border-radius: 999px; background: var(--notice); font-size: 13px; color: var(--muted); }
+.chips li { padding: 3px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 13px; }
 .result-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
-.saved-msg { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--ok); }
-.saved-msg a { color: var(--ok); text-underline-offset: 3px; }
-.tag { align-self: flex-start; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--notice); font-size: 12px; font-weight: 600; color: var(--muted); }
-.hero-grid { display: flex; flex-wrap: wrap; gap: 20px; }
-.hero-main { flex: 2 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.hero-side { flex: 1 1 200px; min-width: 0; background: var(--surface-2); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
-.kicker { font-size: 14px; font-weight: 600; color: var(--muted); }
-.big { font-size: clamp(32px, 7vw, 44px); line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.mid { font-size: clamp(22px, 4.5vw, 27px); line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.saved-msg { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; font-size: 14px; font-weight: 600; color: var(--ok); }
+.saved-msg a { color: inherit; font-weight: 500; margin-left: 4px; text-underline-offset: 3px; }
 
-/* Range chart */
-.range { margin-top: 28px; }
-.legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
-.legend-keys { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-.key { display: inline-flex; align-items: center; gap: 6px; }
-.swatch { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
-.swatch-dash { width: 0; height: 12px; border-left: 2px dashed var(--fg); display: inline-block; }
-.plot { position: relative; height: 104px; }
-.plot-track, .plot-band, .plot-base, .plot-mark { position: absolute; }
-.plot-track { left: 0; right: 0; top: 34px; height: 30px; border-radius: 6px; background: var(--band-track); }
-.plot-band { top: 34px; height: 30px; }
-.band-80 { background: var(--band-80); border-radius: 6px; }
-.band-50 { background: var(--band-50); }
-.plot-base { top: 28px; height: 42px; border-left: 2px dashed var(--fg); }
-.plot-mark { top: 24px; height: 50px; width: 4px; margin-left: -2px; border-radius: 2px; background: var(--accent); }
-.plot-label { position: absolute; white-space: nowrap; font-size: 13px; }
-.plot-label.top { top: 0; font-weight: 600; }
-.plot-label.bottom { top: 78px; color: var(--muted); }
-.at-start { transform: translateX(-6px); }
-.at-mid { transform: translateX(-50%); }
-.at-end { transform: translateX(calc(-100% + 6px)); }
-.axis { position: relative; height: 18px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.axis span { position: absolute; top: 0; white-space: nowrap; }
+/* Forecast */
+.forecast { padding: 0; overflow: hidden; }
+.fc-body { padding: clamp(22px, 4vw, 36px); }
+.kicker { font-size: 14px; font-weight: 600; color: var(--muted); }
+.big { margin-top: 6px; font-family: var(--font-display); font-size: clamp(44px, 8vw, 72px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.fc-sub { margin-top: 12px; font-size: 16px; }
+.fc-sub strong { font-weight: 700; }
+
+.timeline { position: relative; height: 100px; margin: 36px 0 8px; }
+.tl-track, .tl-band, .tl-mark, .tl-pin { position: absolute; }
+.tl-track { left: 0; right: 0; top: 34px; height: 12px; border-radius: 999px; background: var(--track); }
+.tl-band { top: 34px; height: 12px; border-radius: 999px; background: var(--band); }
+.tl-pin { top: 30px; width: 2px; height: 20px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
+.tl-mark { top: 24px; width: 16px; height: 32px; margin-left: -8px; border-radius: 8px; background: var(--amber); box-shadow: 0 0 0 3px var(--surface); }
+.tl-label { position: absolute; white-space: nowrap; font-size: 13px; line-height: 1.3; }
+.tl-label.top { top: 0; font-size: 14px; font-weight: 700; }
+.tl-label.bottom { top: 60px; color: var(--muted); }
+.tl-label.bottom strong { display: block; color: var(--ink); font-weight: 600; }
+.at-start { transform: translateX(0); }
+.at-mid { transform: translateX(-50%); text-align: center; }
+.at-end { transform: translateX(-100%); text-align: right; }
+
+.fc-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 24px; }
+.fc-facts > div { padding: 16px 18px; border-radius: 12px; background: var(--surface-2); display: flex; flex-direction: column; gap: 2px; }
+.fc-facts dt { font-size: 13px; font-weight: 600; color: var(--muted); }
+.fc-facts dd { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.fc-facts dd.sub { font-family: var(--font-body); font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
 
 /* Drivers */
-.drivers-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 16px; margin-bottom: 10px; }
+.drivers-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 16px; margin-bottom: 12px; }
 .drivers-head > div { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.drivers-head h2 { font-size: 18px; }
-.driver { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 2fr) 104px; grid-template-areas: "label bar value"; align-items: center; gap: 6px 16px; padding-block: 12px; border-top: 1px solid var(--line); }
-.driver-label { grid-area: label; min-width: 0; }
+.drivers-head h2, .panel-title { font-size: 19px; }
+.legend-keys { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
+.key { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.driver { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 2fr) 96px; grid-template-areas: "label bar value"; align-items: center; gap: 6px 16px; padding-block: 11px; border-top: 1px solid var(--line); }
+.driver-label { grid-area: label; min-width: 0; font-size: 14px; }
 .driver-label strong { display: block; font-weight: 600; }
-.driver-label span { display: block; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
-.driver-bar { grid-area: bar; position: relative; height: 22px; }
-.driver-bar::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--line-strong); }
-.driver-bar span { position: absolute; top: 3px; height: 16px; border-radius: 3px; }
+.driver-label span { display: block; font-size: 13px; color: var(--muted); }
+.driver-bar { grid-area: bar; position: relative; height: 20px; }
+.driver-bar::before { content: ""; position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: var(--line-strong); }
+.driver-bar span { position: absolute; top: 3px; height: 14px; border-radius: 4px; }
 .bar-save { background: var(--save); }
 .bar-add { background: var(--add); }
-.driver-value { grid-area: value; text-align: right; font-size: 14px; }
+.driver-value { grid-area: value; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .val-save { color: var(--save-text); }
 .val-add { color: var(--add-text); }
-.val-none { color: var(--muted); }
-.driver.total { border-top: 2px solid var(--fg); padding-bottom: 0; }
-.driver.total .driver-value { font-size: 15px; }
+.driver.base .driver-value { color: var(--muted); font-weight: 500; }
+.driver.total { border-top: 2px solid var(--ink); padding-bottom: 0; }
+.driver.total .driver-value { font-size: 15px; font-weight: 700; }
 @media (max-width: 640px) {
   .driver { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label value" "bar bar"; }
   .driver.base .driver-bar, .driver.total .driver-bar { display: none; }
 }
 
-/* Lower result cards */
-.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-.pair .card { display: flex; flex-direction: column; gap: 10px; }
-.pair h2 { font-size: 17px; }
-.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.tile { background: var(--surface-2); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.tile .num { font-size: 20px; white-space: nowrap; }
+/* About the model */
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px 24px; margin: 14px 0 12px; }
+.facts dt { font-size: 13px; color: var(--muted); }
+.facts dd { font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* Tables (saved projects, field map) */
+/* Tables */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-th { text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { text-align: left; font-size: 13px; font-weight: 600; color: var(--muted); padding: 14px 18px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface-2); }
+td { padding: 14px 18px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 tbody tr:last-child td { border-bottom: 0; }
 .saved-card { padding: 0; overflow: hidden; }
-.saved-table { min-width: 760px; }
+.saved-table { min-width: 780px; }
+.saved-table tbody tr { transition: background-color 0.15s; }
+.saved-table tbody tr:hover { background: var(--surface-2); }
 .saved-table td.name { font-weight: 600; }
-.saved-table .likely { font-weight: 600; white-space: nowrap; }
-.saved-table .range-cell { font-family: var(--font-mono); font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.saved-table .likely { font-weight: 700; white-space: nowrap; }
+.saved-table .range-cell { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 14px; }
 .row-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.map-table td:nth-child(2) { font-family: var(--font-mono); font-size: 13px; }
-.map-table td:nth-child(3) { color: var(--muted); }
-.map-table th, .map-table td { padding-inline: 0 16px; }
-.status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 14px; min-height: 0; }
+.map-table td:nth-child(2) { font-size: 13px; color: var(--muted); }
+.map-table td:nth-child(2) code { font-family: inherit; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); color: var(--ink); }
+.map-table td:nth-child(3) { color: var(--muted); font-size: 14px; }
+.map-table th, .map-table td { padding-inline: 0 16px; background: none; }
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 10px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }
 .status:empty { display: none; }
 @media (max-width: 800px) {
   .stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .stack, .stack tbody, .stack tr, .stack td { display: block; width: 100%; min-width: 0; }
   .stack td { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; border: 0; text-align: right; }
-  .stack td::before { content: attr(data-label); font-size: 13px; font-weight: 500; color: var(--muted); text-align: left; flex: none; }
+  .stack td::before { content: attr(data-label); font-size: 13px; color: var(--muted); text-align: left; flex: none; }
   .stack td.name { text-align: left; font-size: 16px; padding-bottom: 8px; }
+  .stack td.likely::before { font-weight: 400; }
   .stack td.name::before, .stack td.actions::before { content: none; }
-  .saved-card { background: none; border: 0; border-radius: 0; }
+  .saved-card { background: none; border: 0; border-radius: 0; box-shadow: none; }
   .saved-table tbody { display: flex; flex-direction: column; gap: 12px; }
-  .saved-table tr { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-  .saved-table td.actions { padding-top: 10px; }
+  .saved-table tr { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .saved-table tbody tr:hover { background: var(--surface); }
+  .saved-table td.actions { padding-top: 12px; }
   .row-actions { justify-content: flex-start; width: 100%; }
-  .row-actions .btn-strong { flex: 1 1 auto; }
+  .row-actions .btn-outline:first-child { flex: 1 1 auto; }
   .map-table tr { padding-block: 10px; border-bottom: 1px solid var(--line); }
   .map-table tr:last-child { border-bottom: 0; }
   .map-table td:nth-child(1) { font-weight: 600; text-align: left; }
   .map-table td:nth-child(1)::before { content: none; }
-  .map-table td:nth-child(3) { text-align: right; }
 }
 
 /* How it works */
-.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-.step { display: flex; flex-direction: column; gap: 8px; }
-.step-no { width: 32px; height: 32px; border-radius: 8px; background: var(--strong); color: var(--on-strong); display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 500; }
-.step h3 { font-size: 18px; margin-top: 4px; }
-.step a { font-size: 14px; font-weight: 600; text-underline-offset: 3px; align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; }
+.steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.step { display: flex; flex-direction: column; gap: 10px; }
+.step-no { font-family: var(--font-display); font-size: 40px; font-weight: 800; line-height: 1; color: var(--save); letter-spacing: -0.03em; }
+.step h3 { font-size: 20px; }
+.step p { font-size: 14px; }
+.step a { font-size: 14px; font-weight: 600; color: var(--save-text); text-underline-offset: 3px; align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; margin-top: auto; }
 .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
 @media (min-width: 1000px) { .how-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
-.how-grid .card { display: flex; flex-direction: column; gap: 6px; }
-.how-grid h3 { font-size: 18px; }
-.metric-row { display: flex; justify-content: space-between; gap: 12px; padding-block: 12px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.how-grid .panel { display: flex; flex-direction: column; gap: 6px; }
+.metric-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
 .metric-row:last-child { border-bottom: 0; }
-.metric-row.head { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding-block: 10px; }
-.metric-row strong { font-weight: 600; }
+.metric-row span:last-child { font-family: var(--font-display); font-size: 18px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.metric-row small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
 
-.site-footer { border-top: 1px solid var(--line); }
-.site-footer p { padding-block: 20px 28px; font-size: 13px; color: var(--muted); }
+/* Footer */
+.footer { border-top: 1px solid var(--line); background: var(--surface); }
+.footer-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding-block: 22px 28px; font-size: 13px; color: var(--muted); }
+.footer-row strong { color: var(--ink); }
+.db { display: inline-flex; align-items: center; gap: 8px; }
+.db::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
+.db.ok::before { background: var(--save); }
+.db.bad::before { background: var(--bad); }
 
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 </head>
 <body>
 
-<header class="site-header">
-  <div class="wrap header-row">
+<header class="band">
+  <div class="wrap topbar">
     <a class="brand" href="#forecast">
-      <span class="brand-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 7 12 9.5 6 14.5 18 17 12 22 12"></polyline></svg></span>
+      <span class="brand-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 7 12 9.5 6 14.5 18 17 12 22 12"></polyline></svg></span>
       PermitPulse
     </a>
     <nav class="nav" aria-label="Main">
       <a href="#forecast">Forecast</a>
-      <a href="#saved" id="nav-saved">Saved projects (3)</a>
+      <a href="#saved" id="nav-saved">Saved projects</a>
       <a href="#how">How it works</a>
     </nav>
   </div>
+  <div class="wrap hero">
+    <h1 id="page-title">When will your NYC permit be approved?</h1>
+    <p>Describe the job as you would file it in DOB NOW. PermitPulse estimates the approval date from similar past filings, with a realistic range and the factors behind it.</p>
+    <p class="notice"><span class="dot" aria-hidden="true"></span><span><strong>Skeleton app.</strong> Forecasts come from our first regression model, stored in our database. A stronger model is in training.</span></p>
+  </div>
 </header>
-
-<div class="notice">
-  <p class="wrap">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-    <span><strong>Skeleton app.</strong> Forecasts come from our first regression model, stored in our database. A stronger model is being trained.</span>
-  </p>
-</div>
 
 <main class="wrap main">
 
-  <section id="forecast" class="section" aria-labelledby="page-title">
-    <div class="intro">
-      <h1 id="page-title">When will your NYC permit be approved?</h1>
-      <p>Describe the job the way you would file it in DOB NOW. PermitPulse forecasts the approval date from similar past filings, with an honest range and the factors behind it.</p>
-    </div>
+  <section id="forecast" class="workbench" aria-labelledby="page-title">
+    <form id="pp-form" class="panel form" novalidate>
+      <div class="form-head">
+        <h2>Your project</h2>
+        <p id="example-note">An example project is filled in. Change any field, or start over.</p>
+      </div>
 
-    <div class="workbench">
-      <form id="pp-form" class="card form" novalidate>
-        <div class="form-head">
-          <h2>Your project</h2>
-          <p class="tiny muted" id="example-note">An example project is filled in. Change any field, or start over.</p>
-        </div>
-
+      <div class="group">
         <div class="field">
           <label class="label" for="pp-name">Project name</label>
           <input class="input" id="pp-name" type="text" autocomplete="off" placeholder="e.g. 214 Bergen St rear extension">
@@ -343,16 +374,20 @@ tbody tr:last-child td { border-bottom: 0; }
         </div>
 
         <fieldset>
+          <legend>Review path</legend>
+          <div class="options" id="pp-reviews"></div>
+        </fieldset>
+      </div>
+
+      <div class="group">
+        <fieldset>
           <legend>Work types</legend>
           <p class="help">Select every type of work on this filing.</p>
           <div class="pills" id="pp-works"></div>
         </fieldset>
+      </div>
 
-        <fieldset>
-          <legend>Review path</legend>
-          <div class="options" id="pp-reviews"></div>
-        </fieldset>
-
+      <div class="group">
         <div class="field-row">
           <div class="field">
             <label class="label" for="pp-cost">Estimated job cost</label>
@@ -363,7 +398,6 @@ tbody tr:last-child td { border-bottom: 0; }
             <input class="input" id="pp-filed" type="date">
           </div>
         </div>
-
         <div class="field-row">
           <div class="field">
             <label class="label" for="pp-area">Floor area (sq ft)</label>
@@ -374,7 +408,6 @@ tbody tr:last-child td { border-bottom: 0; }
             <input class="input" id="pp-units" type="number" inputmode="numeric" min="0">
           </div>
         </div>
-
         <div class="field-row">
           <div class="field">
             <label class="label" for="pp-bldg">Building type</label>
@@ -390,90 +423,86 @@ tbody tr:last-child td { border-bottom: 0; }
           </div>
           <div class="field">
             <label class="label" for="pp-stories">Stories</label>
-            <input class="input" id="pp-stories" type="number" inputmode="numeric" min="1" max="120">
+            <input class="input" id="pp-stories" type="number" inputmode="numeric" min="1" max="200">
           </div>
         </div>
+      </div>
 
-        <div class="form-actions">
-          <button type="submit" class="btn btn-accent" id="run-btn">
-            <span id="run-label">Update forecast</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-          </button>
-          <button type="button" class="btn-link" id="reset-btn">Start over</button>
-        </div>
-      </form>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="run-btn"><span id="run-label">Forecast approval date</span></button>
+        <button type="button" class="btn-link" id="reset-btn">Start over</button>
+      </div>
+    </form>
 
-      <div id="result" class="result"></div>
-    </div>
+    <div id="result" class="result" aria-live="polite"></div>
   </section>
 
   <section id="saved" class="section" aria-labelledby="saved-title">
-    <div class="intro">
+    <div class="section-head">
       <h2 id="saved-title">Saved projects</h2>
-      <p>Saved projects are stored in our database. Open one to load it back into the form and forecast it again.</p>
+      <p>Projects you save are stored in our database. Open one to load it back into the form and forecast it again.</p>
     </div>
     <div class="status" id="saved-status" role="status"></div>
     <div id="saved-list"></div>
   </section>
 
   <section id="how" class="section" aria-labelledby="how-title">
-    <div class="intro">
+    <div class="section-head">
       <h2 id="how-title">How the forecast works</h2>
       <p>PermitPulse learns from New York City's public record of building job filings: when each job was filed, when DOB approved it, and what kind of job it was.</p>
     </div>
 
-    <div class="steps">
-      <div class="card step">
-        <span class="step-no">1</span>
-        <h3>Data</h3>
-        <p class="small">NYC DOB NOW: Build – Job Application Filings, published on NYC Open Data. About 967,000 filings since 2016.</p>
-        <p class="small muted">Our database (Supabase) stores the model, a sample of 2,000 training filings, and every project saved here.</p>
+    <ol class="steps">
+      <li class="panel step">
+        <span class="step-no" aria-hidden="true">1</span>
+        <h3>Collect the filings</h3>
+        <p>NYC DOB NOW: Build job application filings from NYC Open Data, about 967,000 filings since 2016.</p>
+        <p class="muted">Our Supabase database stores the model, a sample of 2,000 training filings, and every project saved here.</p>
         <a href="https://data.cityofnewyork.us/d/w9ak-ipjd" target="_blank" rel="noopener">View the dataset</a>
-      </div>
-      <div class="card step">
-        <span class="step-no">2</span>
-        <h3>Model</h3>
-        <p class="small"><strong>Now:</strong> a linear regression trained on 263,165 filings. It uses cost, floor area, borough, work types, weekend filing and dwelling units. It is weak (R² 0.04), so its ranges are wide.</p>
-        <p class="small"><strong>Next:</strong> gradient-boosted quantile models that predict the 10th, 50th and 90th percentile in business days. The site switches to them automatically once they are trained.</p>
-      </div>
-      <div class="card step">
-        <span class="step-no">3</span>
-        <h3>Validation</h3>
-        <p class="small">We train on older filings and test on newer ones, never the reverse, so the test looks like forecasting a real future permit.</p>
-        <p class="small muted">We report the average error in days and how often real approvals land inside our 80% range.</p>
-      </div>
-    </div>
+      </li>
+      <li class="panel step">
+        <span class="step-no" aria-hidden="true">2</span>
+        <h3>Fit the model</h3>
+        <p><strong>Now:</strong> a linear regression trained on 263,165 filings, using cost, floor area, borough, work types, weekend filing and dwelling units. It is weak (R² 0.04), so its ranges are wide.</p>
+        <p><strong>Next:</strong> gradient-boosted quantile models for the 10th, 50th and 90th percentile in business days. The site switches to them automatically once they are trained.</p>
+      </li>
+      <li class="panel step">
+        <span class="step-no" aria-hidden="true">3</span>
+        <h3>Test on newer filings</h3>
+        <p>We train on older filings and test on newer ones, never the reverse, so the test looks like forecasting a real future permit.</p>
+        <p class="muted">We report the typical error in days and how often real approvals land inside the forecast range.</p>
+      </li>
+    </ol>
 
     <div class="how-grid">
-      <div class="card">
-        <h3>Your inputs and the DOB fields behind them</h3>
+      <div class="panel">
+        <h3 class="panel-title">Your inputs and the DOB fields behind them</h3>
         <p class="small muted">Every question on the form maps to a column in the public dataset.</p>
         <div class="table-wrap">
           <table class="map-table stack">
             <thead><tr><th scope="col">Form question</th><th scope="col">DOB NOW column</th><th scope="col">Values</th></tr></thead>
             <tbody>
-              <tr><td>Borough</td><td data-label="Column">borough</td><td data-label="Values">The five boroughs</td></tr>
-              <tr><td>Job type</td><td data-label="Column">job_type</td><td data-label="Values">Alteration, New Building, Full Demolition and more</td></tr>
-              <tr><td>Work types</td><td data-label="Column">*_work_type</td><td data-label="Values">One yes/no column per work type</td></tr>
-              <tr><td>Review path</td><td data-label="Column">filing_review_type</td><td data-label="Values">Professional Certification or Standard Plan Examination</td></tr>
-              <tr><td>Job cost</td><td data-label="Column">initial_cost</td><td data-label="Values">Dollar amount on the filing</td></tr>
-              <tr><td>Floor area</td><td data-label="Column">total_construction_floor_area</td><td data-label="Values">Square feet of work</td></tr>
-              <tr><td>Dwelling units</td><td data-label="Column">proposed_dwelling_units</td><td data-label="Values">Units after the work</td></tr>
-              <tr><td>Building type</td><td data-label="Column">building_type</td><td data-label="Values">1, 2 or 3 Family, Other</td></tr>
-              <tr><td>Stories</td><td data-label="Column">proposed_no_of_stories</td><td data-label="Values">Stories after the work</td></tr>
-              <tr><td>Filing date</td><td data-label="Column">filing_date</td><td data-label="Values">Starts the clock; captures season and backlog</td></tr>
+              <tr><td>Borough</td><td data-label="Column"><code>borough</code></td><td data-label="Values">The five boroughs</td></tr>
+              <tr><td>Job type</td><td data-label="Column"><code>job_type</code></td><td data-label="Values">Alteration, New Building, Full Demolition and more</td></tr>
+              <tr><td>Work types</td><td data-label="Column"><code>*_work_type</code></td><td data-label="Values">One yes/no column per work type</td></tr>
+              <tr><td>Review path</td><td data-label="Column"><code>filing_review_type</code></td><td data-label="Values">Professional Certification or Standard Plan Examination</td></tr>
+              <tr><td>Job cost</td><td data-label="Column"><code>initial_cost</code></td><td data-label="Values">Dollar amount on the filing</td></tr>
+              <tr><td>Floor area</td><td data-label="Column"><code>total_construction_floor_area</code></td><td data-label="Values">Square feet of work</td></tr>
+              <tr><td>Dwelling units</td><td data-label="Column"><code>proposed_dwelling_units</code></td><td data-label="Values">Units after the work</td></tr>
+              <tr><td>Building type</td><td data-label="Column"><code>building_type</code></td><td data-label="Values">1, 2 or 3 Family, Other</td></tr>
+              <tr><td>Stories</td><td data-label="Column"><code>proposed_no_of_stories</code></td><td data-label="Values">Stories after the work</td></tr>
+              <tr><td>Filing date</td><td data-label="Column"><code>filing_date</code></td><td data-label="Values">Starts the clock; captures season and backlog</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-      <div class="card">
-        <h3>Model results</h3>
-        <p class="small muted">The next model's numbers were reported by our teammate on 2025 filings and will be re-checked after training.</p>
+      <div class="panel">
+        <h3 class="panel-title">Model results</h3>
+        <p class="small muted">The quantile model's numbers were reported by our teammate on 2025 filings. We will check them again after training.</p>
         <div>
-          <div class="metric-row head"><span>Model</span><span>Result</span></div>
-          <div class="metric-row"><strong>Linear regression (live now)</strong><span>R² 0.044</span></div>
-          <div class="metric-row"><strong>Quantile model: typical error</strong><span>13.3 business days</span></div>
-          <div class="metric-row"><strong>Quantile model: approvals inside its range</strong><span>85.3% (Standard Plan)</span></div>
+          <div class="metric-row"><strong>Linear regression<small>Live now</small></strong><span>R² 0.044</span></div>
+          <div class="metric-row"><strong>Quantile model<small>Typical error</small></strong><span>13.3 business days</span></div>
+          <div class="metric-row"><strong>Quantile model<small>Approvals inside its range, Standard Plan</small></strong><span>85.3%</span></div>
         </div>
       </div>
     </div>
@@ -481,8 +510,11 @@ tbody tr:last-child td { border-bottom: 0; }
 
 </main>
 
-<footer class="site-footer">
-  <p class="wrap">PermitPulse · Data: NYC DOB NOW: Build – Job Application Filings, NYC Open Data · <span id="db-status">Checking the database…</span></p>
+<footer class="footer">
+  <div class="wrap footer-row">
+    <p><strong>PermitPulse</strong> is a student project for NYU TECH-UB 24, Fall 2026. Data from NYC DOB NOW: Build job filings on NYC Open Data.</p>
+    <p class="db" id="db-wrap"><span id="db-status">Checking the database…</span></p>
+  </div>
 </footer>
 
 <script>
@@ -501,6 +533,7 @@ tbody tr:last-child td { border-bottom: 0; }
   ];
   var BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
   var JOB_LABEL = { 'Alteration': 'Alteration', 'Alteration CO': 'Alteration CO', 'New Building': 'New Building', 'ALT-CO': 'ALT-CO (existing elements remain)', 'Full Demolition': 'Full Demolition' };
+  var MODEL_LABEL = { 'linear_regression': 'Linear regression', 'histgb_quantile': 'Gradient-boosted quantile model' };
   var REVIEWS = [
     { v: 'Professional Certification', desc: 'Your architect or engineer certifies the plans. DOB may audit the job after approval.' },
     { v: 'Standard Plan Examination', desc: 'A DOB plan examiner reviews the plans before approval.' }
@@ -508,6 +541,7 @@ tbody tr:last-child td { border-bottom: 0; }
   var ICON_CHECK = '<svg class="check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
   var ICON_SAVE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>';
   var ICON_TRASH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
+  var ICON_DONE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
   function defaults() {
     return {
@@ -526,15 +560,17 @@ tbody tr:last-child td { border-bottom: 0; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return isFinite(n) ? n : 0; }
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
-  function fmtDate(iso) {
+  function fmtDate(iso, short) {
     var d = new Date(String(iso) + 'T12:00:00');
-    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', short ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
   }
   function unitWord(unit) { return unit === 'business_days' ? 'business days' : 'days'; }
-  function fmtDays(n) { var x = Number(n); return (Math.round(x * 10) / 10).toString(); }
+  function fmtDays(n) { return (Math.round(Number(n) * 10) / 10).toString(); }
+  function wholeDays(n) { return Math.round(Number(n)).toString(); }
   function reduceMotion() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function scrollToEl(el) { if (el) el.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); }
-  function narrow() { return window.innerWidth < 960; }
+  function narrow() { return window.innerWidth < 980; }
 
   /* ---------- Talking to the backend ---------- */
   var FIELD_NAMES = { name: 'Project name', borough: 'Borough', estimated_cost: 'Estimated job cost', floor_area: 'Floor area',
@@ -622,8 +658,13 @@ tbody tr:last-child td { border-bottom: 0; }
 
   function checkHealth() {
     api('/api/health').then(function (h) {
-      $('db-status').textContent = h.database === 'connected' ? 'Connected to the database' : 'Database not connected';
-    }, function () { $('db-status').textContent = 'Server not reachable'; });
+      var ok = h.database === 'connected';
+      $('db-wrap').className = 'db ' + (ok ? 'ok' : 'bad');
+      $('db-status').textContent = ok ? 'Connected to the database' : 'Database not connected';
+    }, function () {
+      $('db-wrap').className = 'db bad';
+      $('db-status').textContent = 'Server not reachable';
+    });
   }
 
   /* ---------- Form ---------- */
@@ -698,109 +739,103 @@ tbody tr:last-child td { border-bottom: 0; }
   }
 
   /* ---------- Result ---------- */
-  function labelPos(pct) { return pct < 18 ? 'at-start' : pct > 82 ? 'at-end' : 'at-mid'; }
+  function labelPos(pct) { return pct < 15 ? 'at-start' : pct > 85 ? 'at-end' : 'at-mid'; }
 
-  function emptyCard(title, text, extra) {
-    return '<div class="card empty"><div><h2>' + title + '</h2><p class="muted" style="margin-top:6px">' + text + '</p></div>' + (extra || '') + '</div>';
+  function stateCard(kind, title, text, extra) {
+    return '<div class="panel state ' + kind + '"><h2>' + title + '</h2><p class="muted">' + text + '</p>' + (extra || '') + '</div>';
   }
 
   function renderResult() {
     syncForm();
     var box = $('result');
     if (state.loading) {
-      box.innerHTML = emptyCard('Calculating your forecast…', state.slow
+      box.innerHTML = stateCard('loading', '<span class="spin" aria-hidden="true"></span>Calculating your forecast', state.slow
         ? 'Waking up the server. Free hosting can take up to a minute after a quiet period.'
         : 'Running the model on your project.');
       return;
     }
     if (state.error) {
-      box.innerHTML = emptyCard('The forecast did not go through', esc(state.error),
-        '<div><button type="button" class="btn btn-accent btn-sm" id="retry-btn">Try again</button></div>');
+      box.innerHTML = stateCard('error', 'The forecast did not go through', esc(state.error),
+        '<button type="button" class="btn btn-primary btn-sm" id="retry-btn" style="margin-top:8px">Try again</button>');
       $('retry-btn').addEventListener('click', function () { runForecast(true); });
       return;
     }
     if (!state.result) {
-      box.innerHTML = emptyCard('Your forecast will appear here', 'Fill in the project details and press Forecast approval date.');
+      box.innerHTML = stateCard('empty', 'Your forecast will appear here', 'Fill in the project details and press Forecast approval date.');
       return;
     }
 
     var f = state.result, inp = state.inputs, unit = unitWord(f.unit);
     var name = (inp.name || '').trim() || 'Untitled project';
-    var chips = [inp.borough, JOB_LABEL[inp.jobType] || inp.jobType, inp.review, money(num(inp.cost)), 'Filing ' + fmtDate(inp.filed)];
+    var chips = [inp.borough, JOB_LABEL[inp.jobType] || inp.jobType, inp.review, money(num(inp.cost))];
 
-    var hasBase = f.base_days !== null && f.base_days !== undefined;
-    var max = Math.ceil(Math.max(f.high_days, hasBase ? f.base_days : 0, 1) * 1.1 / 10) * 10;
-    function pct(x) { return Math.round(Math.max(0, x) / max * 1000) / 10; }
-    var r = { lo: pct(f.low_days), hi: pct(f.high_days), p50: pct(f.p50_days), base: hasBase ? pct(f.base_days) : 0 };
-    var aria = 'Forecast range from ' + fmtDays(f.low_days) + ' to ' + fmtDays(f.high_days) + ' ' + unit + ', most likely ' + fmtDays(f.p50_days) + ' ' + unit + '.';
+    // Timeline from the filing date (0) to the late end of the range (100%)
+    var max = Math.max(Number(f.high_days), Number(f.p50_days), 1);
+    function pct(x) { return Math.round(Math.min(100, Math.max(0, Number(x) / max * 100)) * 10) / 10; }
+    var lo = pct(f.low_days), p50 = pct(f.p50_days);
+    var aria = 'Forecast range from ' + wholeDays(f.low_days) + ' to ' + wholeDays(f.high_days) + ' ' + unit + ' after filing, most likely ' + wholeDays(f.p50_days) + ' ' + unit + '.';
 
     var drivers = '';
     if (f.factors && f.factors.length) {
+      var hasBase = f.base_days !== null && f.base_days !== undefined;
       var maxAbs = Math.max.apply(null, f.factors.map(function (x) { return Math.abs(x.days); }).concat([1]));
       drivers = f.factors.map(function (x) {
         var w = Math.round(Math.abs(x.days) / maxAbs * 500) / 10, slower = x.days > 0;
         return '<div class="driver"><div class="driver-label"><strong>' + esc(x.label) + '</strong></div>' +
           '<div class="driver-bar" aria-hidden="true"><span class="' + (slower ? 'bar-add' : 'bar-save') + '" style="left:' + (slower ? 50 : 50 - w) + '%;width:' + w + '%"></span></div>' +
-          '<div class="driver-value num ' + (slower ? 'val-add' : 'val-save') + '">' + (slower ? '+' : '−') + fmtDays(Math.abs(x.days)) + ' ' + unit + '</div></div>';
+          '<div class="driver-value ' + (slower ? 'val-add' : 'val-save') + '">' + (slower ? '+' : '−') + fmtDays(Math.abs(x.days)) + ' ' + unit + '</div></div>';
       }).join('');
-      drivers = '<section class="card" aria-labelledby="drivers-title">' +
-        '<div class="drivers-head"><div><h2 id="drivers-title">What is driving this forecast</h2><p class="small muted">Starting from the model\'s base value, each factor adds or saves ' + unit + '.</p></div>' +
-        '<span class="legend-keys tiny muted"><span class="key"><span class="swatch" style="background:var(--save)"></span>Saves ' + unit + '</span><span class="key"><span class="swatch" style="background:var(--add)"></span>Adds ' + unit + '</span></span></div>' +
-        (hasBase ? '<div class="driver base"><div class="driver-label"><strong>Base value</strong><span>Model intercept</span></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + fmtDays(f.base_days) + ' ' + unit + '</div></div>' : '') +
+      drivers = '<section class="panel" aria-labelledby="drivers-title">' +
+        '<div class="drivers-head"><div><h2 id="drivers-title">What moves this forecast</h2><p class="small muted">Each factor adds or saves ' + unit + ' compared with the model\'s starting value.</p></div>' +
+        '<span class="legend-keys"><span class="key"><span class="swatch" style="background:var(--save)"></span>Saves ' + unit + '</span><span class="key"><span class="swatch" style="background:var(--add)"></span>Adds ' + unit + '</span></span></div>' +
+        (hasBase ? '<div class="driver base"><div class="driver-label"><strong>Starting value</strong><span>Before your project details</span></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value">' + fmtDays(f.base_days) + ' ' + unit + '</div></div>' : '') +
         drivers +
-        '<div class="driver total"><div class="driver-label"><strong>Your forecast</strong></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + fmtDays(f.p50_days) + ' ' + unit + '</div></div>' +
+        '<div class="driver total"><div class="driver-label"><strong>Your forecast</strong></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value">' + fmtDays(f.p50_days) + ' ' + unit + '</div></div>' +
         '</section>';
     }
 
     var info = f.model_info || {};
-    var modelRows = '<div class="metric-row"><strong>Model</strong><span>' + esc(f.model) + '</span></div>';
-    if (info.r_squared != null) modelRows += '<div class="metric-row"><strong>R²</strong><span>' + Number(info.r_squared).toFixed(3) + '</span></div>';
-    if (info.n_obs != null) modelRows += '<div class="metric-row"><strong>Trained on</strong><span>' + Number(info.n_obs).toLocaleString('en-US') + ' filings</span></div>';
-    if (info.trained_on) modelRows += '<div class="metric-row"><strong>Trained on</strong><span>' + esc(info.trained_on) + ' filings</span></div>';
+    var facts = '<div><dt>Model</dt><dd>' + esc(MODEL_LABEL[f.model_type] || f.model) + '</dd></div>';
+    if (info.r_squared != null) facts += '<div><dt>Fit (R²)</dt><dd>' + Number(info.r_squared).toFixed(3) + '</dd></div>';
+    if (info.n_obs != null) facts += '<div><dt>Trained on</dt><dd>' + Number(info.n_obs).toLocaleString('en-US') + ' filings</dd></div>';
+    if (info.trained_on) facts += '<div><dt>Trained on</dt><dd>' + esc(info.trained_on) + ' filings</dd></div>';
     var notes = (f.notes || []).map(function (n) { return '<p class="small muted">' + esc(n) + '</p>'; }).join('');
 
-    $('result').innerHTML =
-      (state.changed ? '<p class="small" role="status" style="padding:10px 14px;border-radius:10px;background:var(--notice)">You changed the inputs. Press <strong>Update forecast</strong> to refresh.</p>' : '') +
+    box.innerHTML =
+      (state.changed ? '<p class="stale" role="status">You changed the inputs. Press <strong>Update forecast</strong> to refresh.</p>' : '') +
+      '<section class="panel forecast" aria-label="Forecast">' +
       '<div class="result-head">' +
         '<div class="result-title"><h2 id="result-heading" tabindex="-1">' + esc(name) + '</h2>' +
           '<ul class="chips">' + chips.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>' +
         '<div class="result-actions">' +
-          (state.justSaved ? '<span class="saved-msg" role="status"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>Saved to database · <a href="#saved">View</a></span>' : '') +
-          '<button type="button" class="btn btn-strong btn-sm" id="save-btn"' + (state.saving ? ' disabled' : '') + '>' + ICON_SAVE + (state.saving ? 'Saving…' : 'Save project') + '</button>' +
+          (state.justSaved ? '<span class="saved-msg" role="status">' + ICON_DONE + 'Saved <a href="#saved">View list</a></span>' : '') +
+          '<button type="button" class="btn btn-outline btn-sm" id="save-btn"' + (state.saving ? ' disabled' : '') + '>' + ICON_SAVE + (state.saving ? 'Saving…' : 'Save project') + '</button>' +
         '</div>' +
       '</div>' +
-      '<section class="card" aria-label="Forecast">' +
-        '<div class="hero-grid">' +
-          '<div class="hero-main">' +
-            '<div class="kicker">Most likely approval date</div>' +
-            '<div class="big">' + fmtDate(f.p50_date) + '</div>' +
-            '<p>About <strong>' + fmtDays(f.p50_days) + ' ' + unit + '</strong> after filing on ' + fmtDate(inp.filed) + '.</p>' +
-            '<p class="small muted">Likely range: ' + fmtDate(f.low_date) + ' to ' + fmtDate(f.high_date) + ' (' + fmtDays(f.low_days) + ' to ' + fmtDays(f.high_days) + ' ' + unit + ').</p>' +
-          '</div>' +
-          '<div class="hero-side">' +
-            '<div class="kicker">Safe date to schedule your crew</div>' +
-            '<div class="mid">' + fmtDate(f.high_date) + '</div>' +
-            '<p class="small">The late end of the range (' + fmtDays(f.high_days) + ' ' + unit + ' after filing).</p>' +
-          '</div>' +
+        '<div class="fc-body">' +
+        '<p class="kicker">Most likely approval date</p>' +
+        '<p class="big">' + fmtDate(f.p50_date) + '</p>' +
+        '<p class="fc-sub">About <strong>' + wholeDays(f.p50_days) + ' ' + unit + '</strong> after you file on ' + fmtDate(inp.filed) + '.</p>' +
+        '<div class="timeline" role="img" aria-label="' + esc(aria) + '">' +
+          '<div class="tl-track"></div>' +
+          '<div class="tl-band" style="left:' + lo + '%;right:0"></div>' +
+          '<div class="tl-pin" style="left:0"></div>' +
+          '<div class="tl-pin" style="left:100%"></div>' +
+          '<div class="tl-mark" style="left:' + p50 + '%"></div>' +
+          '<div class="tl-label top ' + labelPos(p50) + '" style="left:' + p50 + '%">Likely ' + fmtDate(f.p50_date, true) + '</div>' +
+          '<div class="tl-label bottom at-start" style="left:0">Filed<strong>' + fmtDate(inp.filed, true) + '</strong></div>' +
+          '<div class="tl-label bottom at-end" style="left:100%">Late end<strong>' + fmtDate(f.high_date, true) + '</strong></div>' +
         '</div>' +
-        '<div class="range">' +
-          '<div class="legend"><strong style="font-weight:600">Forecast range, ' + unit + ' after filing</strong>' +
-            '<span class="legend-keys"><span class="key"><span class="swatch" style="background:var(--band-80)"></span>Likely range</span>' + (hasBase ? '<span class="key"><span class="swatch-dash"></span>Base value</span>' : '') + '</span></div>' +
-          '<div class="plot" role="img" aria-label="' + esc(aria) + '">' +
-            '<div class="plot-track"></div>' +
-            '<div class="plot-band band-80" style="left:' + r.lo + '%;width:' + Math.max(0, Math.round((r.hi - r.lo) * 10) / 10) + '%"></div>' +
-            (hasBase ? '<div class="plot-base" style="left:' + r.base + '%"></div>' : '') +
-            '<div class="plot-mark" style="left:' + r.p50 + '%"></div>' +
-            '<div class="plot-label top ' + labelPos(r.p50) + '" style="left:' + r.p50 + '%">Likely · ' + fmtDays(f.p50_days) + ' ' + unit + '</div>' +
-            (hasBase ? '<div class="plot-label bottom ' + labelPos(r.base) + '" style="left:' + r.base + '%">Base · ' + fmtDays(f.base_days) + '</div>' : '') +
-          '</div>' +
-          '<div class="axis" aria-hidden="true"><span style="left:0">0</span><span class="at-mid" style="left:50%">' + Math.round(max / 2) + '</span><span style="right:0">' + max + ' ' + unit + '</span></div>' +
+        '<dl class="fc-facts">' +
+          '<div><dt>Likely range</dt><dd>' + fmtDate(f.low_date, true) + ' to ' + fmtDate(f.high_date) + '</dd><dd class="sub">' + wholeDays(f.low_days) + ' to ' + wholeDays(f.high_days) + ' ' + unit + ' after filing</dd></div>' +
+          '<div><dt>Safe date to book your crew</dt><dd>' + fmtDate(f.high_date) + '</dd><dd class="sub">The late end of the range</dd></div>' +
+        '</dl>' +
         '</div>' +
       '</section>' +
       drivers +
-      '<section class="card" aria-labelledby="model-title" style="display:flex;flex-direction:column;gap:6px">' +
-        '<h2 id="model-title" style="font-size:17px">About this forecast</h2>' +
-        '<div>' + modelRows + '</div>' + notes +
+      '<section class="panel" aria-labelledby="model-title">' +
+        '<h2 id="model-title" class="panel-title">About this forecast</h2>' +
+        '<dl class="facts">' + facts + '</dl>' + notes +
       '</section>';
 
     $('save-btn').addEventListener('click', save);
@@ -835,21 +870,21 @@ tbody tr:last-child td { border-bottom: 0; }
     }
 
     var list = $('saved-list');
-    if (state.savedLoading) { list.innerHTML = '<div class="card"><p class="muted">Loading saved projects from the database…</p></div>'; return; }
+    if (state.savedLoading) { list.innerHTML = '<div class="panel"><p class="muted">Loading saved projects from the database…</p></div>'; return; }
     if (state.savedError) {
-      list.innerHTML = '<div class="card" style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><p>' + esc(state.savedError) + '</p><button type="button" class="btn btn-outline btn-sm" id="saved-retry">Try again</button></div>';
+      list.innerHTML = '<div class="panel state error" style="min-height:0"><p>' + esc(state.savedError) + '</p><button type="button" class="btn btn-outline btn-sm" id="saved-retry">Try again</button></div>';
       $('saved-retry').addEventListener('click', function () { state.savedLoading = true; renderSaved(); loadSaved(); });
       return;
     }
     if (!state.saved.length) {
-      list.innerHTML = '<div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding-block:40px">' +
-        '<h3 style="font-size:18px">No saved projects yet</h3><p class="muted">Run a forecast and press Save project to keep it here.</p>' +
-        '<a class="btn btn-accent btn-sm" href="#forecast">Start a forecast</a></div>';
+      list.innerHTML = '<div class="panel state empty" style="min-height:0;align-items:center;text-align:center;padding-block:40px">' +
+        '<h3>No saved projects yet</h3><p class="muted">Run a forecast and press Save project to keep it here.</p>' +
+        '<a class="btn btn-primary btn-sm" href="#forecast">Start a forecast</a></div>';
       return;
     }
     var rows = state.saved.map(function (p) {
       var unit = unitWord(p.unit);
-      var range = p.low_days == null ? '—' : fmtDays(p.low_days) + '–' + fmtDays(p.high_days) + ' ' + unit;
+      var range = p.low_days == null ? '—' : wholeDays(p.low_days) + ' to ' + wholeDays(p.high_days) + ' ' + unit;
       return '<tr>' +
         '<td class="name">' + esc(p.name || 'Untitled project') + '</td>' +
         '<td data-label="Borough">' + esc(p.borough) + '</td>' +
@@ -858,12 +893,12 @@ tbody tr:last-child td { border-bottom: 0; }
         '<td data-label="Likely approval" class="likely">' + (p.p50_date ? fmtDate(p.p50_date) : '—') + '</td>' +
         '<td data-label="Range" class="range-cell">' + range + '</td>' +
         '<td class="actions"><div class="row-actions">' +
-          '<button type="button" class="btn btn-strong btn-sm" data-open="' + p.id + '">Open</button>' +
+          '<button type="button" class="btn btn-outline btn-sm" data-open="' + p.id + '">Open</button>' +
           '<button type="button" class="btn btn-outline btn-sm btn-icon" data-del="' + p.id + '" aria-label="Delete ' + esc(p.name || 'project') + '">' + ICON_TRASH + '</button>' +
         '</div></td></tr>';
     }).join('');
     list.innerHTML =
-      '<div class="card saved-card"><div class="table-wrap"><table class="saved-table stack">' +
+      '<div class="panel saved-card"><div class="table-wrap"><table class="saved-table stack">' +
         '<thead><tr><th scope="col">Project</th><th scope="col">Borough</th><th scope="col">Job type</th><th scope="col">Filing date</th><th scope="col">Likely approval</th><th scope="col">Range</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>' +
         '<tbody>' + rows + '</tbody></table></div></div>';
   }
@@ -908,6 +943,5 @@ tbody tr:last-child td { border-bottom: 0; }
   checkHealth();
 })();
 </script>
-
 </body>
 </html>
