@@ -6,16 +6,17 @@
 <meta name="description" content="PermitPulse forecasts when an NYC construction permit will be approved.">
 <meta name="theme-color" content="#1E3B2C">
 <title>PermitPulse</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<script>if (location.hostname.endsWith('github.io')) location.replace('https://permitpulse-qroy.onrender.com/');</script>
 <style>
 /*
   Look: an NYC job site. Sidewalk-shed green for the brand, hi-vis amber for the one thing
   that matters (the most likely date), quiet paper and ink everywhere else.
   Type: Overpass (from US highway signage) for headings and dates, Public Sans for reading.
   Motion: one load sequence, then motion only in answer to what the user does.
+  Fonts are served by our own backend (SIL Open Font License, see fonts/), so the page loads nothing from other sites.
 */
+@font-face { font-family: 'Overpass'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('fonts/overpass.woff2') format('woff2'); }
+@font-face { font-family: 'Public Sans'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('fonts/public-sans.woff2') format('woff2'); }
 :root {
   --paper: #F3F5F2;
   --surface: #FFFFFF;
@@ -328,6 +329,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .saved-table tr.fresh { animation: flash 1.8s ease both; }
 @keyframes flash { 0%, 40% { background: var(--amber-tint); } }
 .saved-table td.name { font-weight: 600; }
+.example-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 500; vertical-align: 1px; }
 .saved-table .likely { font-weight: 700; white-space: nowrap; }
 .saved-table .range-cell { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 14px; }
 .row-actions { display: flex; justify-content: flex-end; gap: 8px; }
@@ -540,7 +542,7 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
   <section id="saved" class="section" aria-labelledby="saved-title">
     <div class="section-head">
       <h2 id="saved-title">Saved projects</h2>
-      <p>Stored in our Supabase database. Open one to forecast it again.</p>
+      <p>Stored in our Supabase database. Only you see the projects you save.</p>
     </div>
     <div id="saved-list"></div>
   </section>
@@ -639,8 +641,18 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
 (function () {
   'use strict';
 
-  // The backend serves this page; the GitHub Pages copy talks to it across sites
-  var API = location.hostname.endsWith('github.io') ? 'https://permitpulse-qroy.onrender.com' : '';
+  // A random key kept in this browser. Projects saved with it can only be seen and deleted from here.
+  var OWNER_KEY = (function () {
+    var key = null;
+    try { key = localStorage.getItem('pp-owner-key'); } catch (e) {}
+    if (!/^[0-9a-f]{64}$/.test(key || '')) {
+      var bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      key = Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      try { localStorage.setItem('pp-owner-key', key); } catch (e) {}
+    }
+    return key;
+  })();
 
   var WORK = [
     ['GeneralConstruction', 'General construction'], ['Plumbing', 'Plumbing'], ['MechanicSystems', 'Mechanical systems'],
@@ -729,9 +741,9 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
     dwelling_units: 'Dwelling units', stories: 'Stories', planned_filing_date: 'Planned filing date', work_types: 'Work types' };
 
   function api(path, method, body) {
-    var opts = { method: method || 'GET', headers: {} };
+    var opts = { method: method || 'GET', headers: { 'X-Owner-Key': OWNER_KEY }, credentials: 'omit' };
     if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
-    return fetch(API + path, opts).then(function (r) {
+    return fetch(path, opts).then(function (r) {
       if (r.status === 204) return null;
       return r.json().catch(function () { return {}; }).then(function (data) {
         if (!r.ok) throw new Error(errorText(data, r.status));
@@ -1036,18 +1048,18 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
       return;
     }
     var rows = state.saved.map(function (p) {
-      var unit = unitWord(p.unit);
+      var id = Number(p.id), unit = unitWord(p.unit);
       var range = p.low_days == null ? '—' : wholeDays(p.low_days) + ' to ' + wholeDays(p.high_days) + ' ' + unit;
-      return '<tr' + (p.id === state.freshId ? ' class="fresh"' : '') + '>' +
-        '<td class="name">' + esc(p.name || 'Untitled project') + '</td>' +
+      return '<tr' + (id === state.freshId ? ' class="fresh"' : '') + '>' +
+        '<td class="name">' + esc(p.name || 'Untitled project') + (p.mine ? '' : '<span class="example-tag">Example</span>') + '</td>' +
         '<td data-label="Borough">' + esc(p.borough) + '</td>' +
         '<td data-label="Job type">' + esc(JOB_LABEL[p.job_type] || p.job_type || '—') + '</td>' +
         '<td data-label="Filing date">' + fmtDate(p.planned_filing_date) + '</td>' +
         '<td data-label="Likely approval" class="likely">' + (p.p50_date ? fmtDate(p.p50_date) : '—') + '</td>' +
         '<td data-label="Range" class="range-cell">' + range + '</td>' +
         '<td class="actions"><div class="row-actions">' +
-          '<button type="button" class="btn btn-outline btn-sm" data-open="' + p.id + '">Open</button>' +
-          '<button type="button" class="btn btn-outline btn-sm btn-icon" data-del="' + p.id + '" aria-label="Delete ' + esc(p.name || 'project') + '">' + ICON_TRASH + '</button>' +
+          '<button type="button" class="btn btn-outline btn-sm" data-open="' + id + '">Open</button>' +
+          (p.mine ? '<button type="button" class="btn btn-outline btn-sm btn-icon" data-del="' + id + '" aria-label="Delete ' + esc(p.name || 'project') + '">' + ICON_TRASH + '</button>' : '') +
         '</div></td></tr>';
     }).join('');
     state.freshId = null;
@@ -1094,7 +1106,7 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
       api('/api/health').then(function (h) {
         var ms = Math.round(performance.now() - t0);
         out.innerHTML = 'Round trip in <strong>' + fmtMs(ms) + '</strong>. ' +
-          (h.database === 'connected' ? 'Database connected, <strong>' + h.saved_projects + '</strong> saved projects.' : 'The database did not answer.');
+          (h.database === 'connected' ? 'Database connected.' : 'The database did not answer.');
       }, function () {
         out.textContent = 'The server did not answer. Try again in a minute.';
       }).then(function () { btn.disabled = false; });
