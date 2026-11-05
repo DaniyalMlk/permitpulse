@@ -299,7 +299,7 @@ tbody tr:last-child td { border-bottom: 0; }
 <div class="notice">
   <p class="wrap">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-    <span><strong>Prototype.</strong> Forecast numbers are placeholders until our model is trained on DOB NOW filings.</span>
+    <span><strong>Skeleton app.</strong> Forecasts come from our first regression model, stored in our database. A stronger model is being trained.</span>
   </p>
 </div>
 
@@ -366,6 +366,17 @@ tbody tr:last-child td { border-bottom: 0; }
 
         <div class="field-row">
           <div class="field">
+            <label class="label" for="pp-area">Floor area (sq ft)</label>
+            <input class="input" id="pp-area" type="number" inputmode="numeric" min="0">
+          </div>
+          <div class="field">
+            <label class="label" for="pp-units">Dwelling units</label>
+            <input class="input" id="pp-units" type="number" inputmode="numeric" min="0">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
             <label class="label" for="pp-bldg">Building type</label>
             <div class="select-wrap">
               <select class="select" id="pp-bldg">
@@ -399,7 +410,7 @@ tbody tr:last-child td { border-bottom: 0; }
   <section id="saved" class="section" aria-labelledby="saved-title">
     <div class="intro">
       <h2 id="saved-title">Saved projects</h2>
-      <p>Open a saved forecast to load it back into the form. Three example projects are preloaded in this prototype.</p>
+      <p>Saved projects are stored in our database. Open one to load it back into the form and forecast it again.</p>
     </div>
     <div class="status" id="saved-status" role="status"></div>
     <div id="saved-list"></div>
@@ -416,14 +427,14 @@ tbody tr:last-child td { border-bottom: 0; }
         <span class="step-no">1</span>
         <h3>Data</h3>
         <p class="small">NYC DOB NOW: Build – Job Application Filings, published on NYC Open Data. About 967,000 filings since 2016.</p>
-        <p class="small muted">We predict the number of days from Filing Date to Approved Date, using initial filings only.</p>
+        <p class="small muted">Our database (Supabase) stores the model, a sample of 2,000 training filings, and every project saved here.</p>
         <a href="https://data.cityofnewyork.us/d/w9ak-ipjd" target="_blank" rel="noopener">View the dataset</a>
       </div>
       <div class="card step">
         <span class="step-no">2</span>
         <h3>Model</h3>
-        <p class="small"><strong>Baseline:</strong> the median approval time for the same job type, roughly what DOB averages give people today.</p>
-        <p class="small"><strong>Model:</strong> a regression that predicts the 10th, 50th and 90th percentile approval time from your project's factors, so every forecast comes with a range and a factor breakdown.</p>
+        <p class="small"><strong>Now:</strong> a linear regression trained on 263,165 filings. It uses cost, floor area, borough, work types, weekend filing and dwelling units. It is weak (R² 0.04), so its ranges are wide.</p>
+        <p class="small"><strong>Next:</strong> gradient-boosted quantile models that predict the 10th, 50th and 90th percentile in business days. The site switches to them automatically once they are trained.</p>
       </div>
       <div class="card step">
         <span class="step-no">3</span>
@@ -446,6 +457,8 @@ tbody tr:last-child td { border-bottom: 0; }
               <tr><td>Work types</td><td data-label="Column">*_work_type</td><td data-label="Values">One yes/no column per work type</td></tr>
               <tr><td>Review path</td><td data-label="Column">filing_review_type</td><td data-label="Values">Professional Certification or Standard Plan Examination</td></tr>
               <tr><td>Job cost</td><td data-label="Column">initial_cost</td><td data-label="Values">Dollar amount on the filing</td></tr>
+              <tr><td>Floor area</td><td data-label="Column">total_construction_floor_area</td><td data-label="Values">Square feet of work</td></tr>
+              <tr><td>Dwelling units</td><td data-label="Column">proposed_dwelling_units</td><td data-label="Values">Units after the work</td></tr>
               <tr><td>Building type</td><td data-label="Column">building_type</td><td data-label="Values">1, 2 or 3 Family, Other</td></tr>
               <tr><td>Stories</td><td data-label="Column">proposed_no_of_stories</td><td data-label="Values">Stories after the work</td></tr>
               <tr><td>Filing date</td><td data-label="Column">filing_date</td><td data-label="Values">Starts the clock; captures season and backlog</td></tr>
@@ -454,13 +467,13 @@ tbody tr:last-child td { border-bottom: 0; }
         </div>
       </div>
       <div class="card">
-        <h3>Backtest results</h3>
-        <p class="small muted">Filled in after the first model run on held-out recent filings.</p>
+        <h3>Model results</h3>
+        <p class="small muted">The next model's numbers were reported by our teammate on 2025 filings and will be re-checked after training.</p>
         <div>
-          <div class="metric-row head"><span>Method</span><span>Average error</span></div>
-          <div class="metric-row"><strong>Baseline: job-type median</strong><span class="muted">Pending</span></div>
-          <div class="metric-row"><strong>PermitPulse model</strong><span class="muted">Pending</span></div>
-          <div class="metric-row"><strong>Approvals inside 80% range</strong><span class="muted">Pending (target 80%)</span></div>
+          <div class="metric-row head"><span>Model</span><span>Result</span></div>
+          <div class="metric-row"><strong>Linear regression (live now)</strong><span>R² 0.044</span></div>
+          <div class="metric-row"><strong>Quantile model: typical error</strong><span>13.3 business days</span></div>
+          <div class="metric-row"><strong>Quantile model: approvals inside its range</strong><span>85.3% (Standard Plan)</span></div>
         </div>
       </div>
     </div>
@@ -469,18 +482,23 @@ tbody tr:last-child td { border-bottom: 0; }
 </main>
 
 <footer class="site-footer">
-  <p class="wrap">PermitPulse prototype · Data: NYC DOB NOW: Build – Job Application Filings, NYC Open Data</p>
+  <p class="wrap">PermitPulse · Data: NYC DOB NOW: Build – Job Application Filings, NYC Open Data · <span id="db-status">Checking the database…</span></p>
 </footer>
 
 <script>
 (function () {
   'use strict';
 
-  var WORK = {
-    'General Construction': 0.03, 'Plumbing': 0.04, 'Mechanical Systems': 0.06, 'Structural': 0.12,
-    'Foundation': 0.12, 'Earth Work': 0.08, 'Sprinkler': 0.05, 'Standpipe': 0.05,
-    'Sidewalk Shed': -0.25, 'Scaffold': -0.2, 'Solar': 0.02, 'Sign': -0.05, 'Curb Cut': 0.1
-  };
+  // The backend serves this page; the GitHub Pages copy talks to it across sites
+  var API = location.hostname.endsWith('github.io') ? 'https://permitpulse.onrender.com' : '';
+
+  var WORK = [
+    ['GeneralConstruction', 'General construction'], ['Plumbing', 'Plumbing'], ['MechanicSystems', 'Mechanical systems'],
+    ['Structural', 'Structural'], ['Foundation', 'Foundation'], ['EarthWork', 'Earth work'], ['Sprinkler', 'Sprinkler'],
+    ['StandPipe', 'Standpipe'], ['Shed', 'Sidewalk shed'], ['Scaffold', 'Scaffold'], ['Fence', 'Fence'], ['Sign', 'Sign'],
+    ['CurbCut', 'Curb cut'], ['Antenna', 'Antenna'], ['Solar', 'Solar'], ['GreenRoof', 'Green roof'],
+    ['ProtMechanicMethods', 'Protection (mechanical methods)']
+  ];
   var BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
   var JOB_LABEL = { 'Alteration': 'Alteration', 'Alteration CO': 'Alteration CO', 'New Building': 'New Building', 'ALT-CO': 'ALT-CO (existing elements remain)', 'Full Demolition': 'Full Demolition' };
   var REVIEWS = [
@@ -494,57 +512,118 @@ tbody tr:last-child td { border-bottom: 0; }
   function defaults() {
     return {
       name: 'Kitchen and bath renovation, 2-family house', borough: 'Brooklyn', jobType: 'Alteration',
-      works: { 'General Construction': true, 'Plumbing': true, 'Mechanical Systems': true },
-      review: 'Standard Plan Examination', cost: '650000', bldg: '2 Family', stories: '2', filed: '2026-10-19'
+      works: ['GeneralConstruction', 'Plumbing', 'MechanicSystems'], review: 'Standard Plan Examination',
+      cost: '650000', area: '1400', units: '2', bldg: '2 Family', stories: '2', filed: '2026-11-16'
     };
   }
-  function seed() {
-    return [
-      { id: 's1', inputs: { name: 'Rear extension, 2-family house', borough: 'Brooklyn', jobType: 'Alteration', works: { 'General Construction': true, 'Plumbing': true, 'Structural': true }, review: 'Standard Plan Examination', cost: '450000', bldg: '2 Family', stories: '3', filed: '2026-10-19' } },
-      { id: 's2', inputs: { name: '7-story residential building', borough: 'Queens', jobType: 'New Building', works: { 'General Construction': true, 'Plumbing': true, 'Mechanical Systems': true, 'Structural': true, 'Foundation': true, 'Earth Work': true, 'Sprinkler': true, 'Standpipe': true }, review: 'Standard Plan Examination', cost: '12000000', bldg: 'Other', stories: '7', filed: '2026-09-08' } },
-      { id: 's3', inputs: { name: 'Sidewalk shed for facade repair', borough: 'Manhattan', jobType: 'Alteration', works: { 'Sidewalk Shed': true }, review: 'Professional Certification', cost: '25000', bldg: 'Other', stories: '20', filed: '2026-10-01' } }
-    ];
-  }
 
-  var state = { inputs: defaults(), saved: seed(), ran: true, loadedId: null, justSaved: false, lastDeleted: null, isExample: true };
+  var state = {
+    inputs: defaults(), isExample: true, result: null, loading: false, error: null, changed: false,
+    saved: [], savedLoading: true, savedError: null, justSaved: false, saving: false, lastDeleted: null
+  };
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return isFinite(n) ? n : 0; }
   function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
-  function addDays(iso, n) {
+  function fmtDate(iso) {
     var d = new Date(String(iso) + 'T12:00:00');
-    if (isNaN(d.getTime())) d = new Date();
-    d.setDate(d.getDate() + n);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
+  function unitWord(unit) { return unit === 'business_days' ? 'business days' : 'days'; }
+  function fmtDays(n) { var x = Number(n); return (Math.round(x * 10) / 10).toString(); }
   function reduceMotion() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function scrollToEl(el) { if (el) el.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); }
   function narrow() { return window.innerWidth < 960; }
 
-  // Placeholder model: a job-type baseline adjusted by each factor, with a log-normal range.
-  function model(inp) {
-    var baseByJob = { 'Alteration': 30, 'Alteration CO': 70, 'New Building': 100, 'ALT-CO': 90, 'Full Demolition': 50 };
-    var base = baseByJob[inp.jobType] || 40;
-    var steps = [];
-    var cur = base;
-    function apply(label, value, mult) { var next = cur * mult; steps.push({ label: label, value: value, delta: next - cur }); cur = next; }
-    apply('Review path', inp.review, inp.review === 'Professional Certification' ? 0.6 : 1.25);
-    var boro = { 'Manhattan': 1.12, 'Brooklyn': 1.06, 'Queens': 1, 'Bronx': 0.95, 'Staten Island': 0.9 };
-    apply('Borough', inp.borough, boro[inp.borough] || 1);
-    var sum = 0, picked = [], works = inp.works || {};
-    Object.keys(WORK).forEach(function (k) { if (works[k]) { sum += WORK[k]; picked.push(k); } });
-    var scope = picked.length === 0 ? 'No work types selected' : (picked.length <= 3 ? picked.join(', ') : picked.slice(0, 3).join(', ') + ' +' + (picked.length - 3) + ' more');
-    apply('Scope of work', scope, Math.min(1.4, Math.max(0.6, 1 + sum)));
-    var cost = num(inp.cost);
-    apply('Job cost', money(cost), cost < 50000 ? 0.85 : cost < 500000 ? 1 : cost < 5000000 ? 1.15 : 1.3);
-    var stories = Math.max(1, Math.round(num(inp.stories)) || 1);
-    var bm = (inp.bldg === 'Other' ? 1 : 0.93) * (stories <= 3 ? 0.95 : stories <= 6 ? 1 : stories <= 12 ? 1.08 : 1.15);
-    apply('Building', inp.bldg + ' · ' + stories + (stories === 1 ? ' story' : ' stories'), bm);
-    var sigma = 0.5 + (inp.review === 'Standard Plan Examination' ? 0.1 : 0) + (inp.jobType === 'New Building' ? 0.05 : 0);
-    function q(z) { return Math.max(1, Math.round(cur * Math.exp(z * sigma))); }
-    return { base: base, steps: steps, p50: Math.max(1, Math.round(cur)), p10: q(-1.2816), p25: q(-0.6745), p75: q(0.6745), p80: q(0.8416), p90: q(1.2816) };
+  /* ---------- Talking to the backend ---------- */
+  var FIELD_NAMES = { name: 'Project name', borough: 'Borough', estimated_cost: 'Estimated job cost', floor_area: 'Floor area',
+    dwelling_units: 'Dwelling units', stories: 'Stories', planned_filing_date: 'Planned filing date', work_types: 'Work types' };
+
+  function api(path, method, body) {
+    var opts = { method: method || 'GET', headers: {} };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    return fetch(API + path, opts).then(function (r) {
+      if (r.status === 204) return null;
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        if (!r.ok) throw new Error(errorText(data, r.status));
+        return data;
+      });
+    }, function () {
+      throw new Error('Could not reach the PermitPulse server. Check your connection and try again.');
+    });
+  }
+
+  function errorText(data, status) {
+    var d = data && data.detail;
+    if (Array.isArray(d)) {
+      return d.map(function (e) {
+        var field = e.loc ? e.loc[e.loc.length - 1] : '';
+        return (FIELD_NAMES[field] || field) + ': ' + String(e.msg).replace(/^Value error, /, '');
+      }).join('. ');
+    }
+    if (typeof d === 'string') return d;
+    return 'The server returned an error (' + status + '). Try again.';
+  }
+
+  function requestBody(inp) {
+    return {
+      name: inp.name || '',
+      borough: inp.borough,
+      job_type: inp.jobType,
+      review_type: inp.review,
+      work_types: inp.works.slice(),
+      estimated_cost: num(inp.cost),
+      floor_area: num(inp.area),
+      dwelling_units: Math.round(num(inp.units)),
+      building_type: inp.bldg || null,
+      stories: inp.stories === '' || inp.stories == null ? null : Math.max(1, Math.round(num(inp.stories))),
+      planned_filing_date: inp.filed || null
+    };
+  }
+
+  function fromSaved(p) {
+    return {
+      name: p.name || '', borough: p.borough, jobType: p.job_type || 'Alteration', works: (p.work_types || []).slice(),
+      review: p.review_type || 'Standard Plan Examination', cost: String(Number(p.estimated_cost || 0)),
+      area: String(Number(p.floor_area || 0)), units: String(p.dwelling_units || 0), bldg: p.building_type || 'Other',
+      stories: p.stories == null ? '' : String(p.stories), filed: p.planned_filing_date
+    };
+  }
+
+  var slowTimer = null;
+  function runForecast(focusResult) {
+    state.loading = true; state.error = null; state.slow = false; state.justSaved = false;
+    renderResult();
+    clearTimeout(slowTimer);
+    slowTimer = setTimeout(function () { if (state.loading) { state.slow = true; renderResult(); } }, 4000);
+    var sent = JSON.stringify(state.inputs);
+    return api('/api/predict', 'POST', requestBody(state.inputs)).then(function (data) {
+      state.result = data; state.resultFor = sent; state.changed = false;
+    }, function (err) {
+      state.error = err.message;
+    }).then(function () {
+      state.loading = false; clearTimeout(slowTimer);
+      renderResult();
+      if (focusResult) {
+        if (narrow()) scrollToEl($('result'));
+        var h = $('result-heading'); if (h) h.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  function loadSaved() {
+    return api('/api/projects').then(function (rows) {
+      state.saved = rows; state.savedError = null;
+    }, function (err) {
+      state.savedError = err.message;
+    }).then(function () { state.savedLoading = false; renderSaved(); });
+  }
+
+  function checkHealth() {
+    api('/api/health').then(function (h) {
+      $('db-status').textContent = h.database === 'connected' ? 'Connected to the database' : 'Database not connected';
+    }, function () { $('db-status').textContent = 'Server not reachable'; });
   }
 
   /* ---------- Form ---------- */
@@ -552,46 +631,40 @@ tbody tr:last-child td { border-bottom: 0; }
     $('pp-boroughs').innerHTML = BOROUGHS.map(function (b) {
       return '<button type="button" class="pill" data-borough="' + esc(b) + '" aria-pressed="false">' + esc(b) + '</button>';
     }).join('');
-    $('pp-works').innerHTML = Object.keys(WORK).map(function (k) {
-      return '<button type="button" class="pill" data-work="' + esc(k) + '" aria-pressed="false">' + ICON_CHECK + '<span>' + esc(k) + '</span></button>';
+    $('pp-works').innerHTML = WORK.map(function (w) {
+      return '<button type="button" class="pill" data-work="' + w[0] + '" aria-pressed="false">' + ICON_CHECK + '<span>' + esc(w[1]) + '</span></button>';
     }).join('');
     $('pp-reviews').innerHTML = REVIEWS.map(function (r) {
       return '<button type="button" class="option" data-review="' + esc(r.v) + '" aria-pressed="false"><span class="radio" aria-hidden="true"></span><span class="option-text"><strong>' + esc(r.v) + '</strong><span>' + esc(r.desc) + '</span></span></button>';
     }).join('');
 
     $('pp-boroughs').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-borough]'); if (!b) return;
-      change({ borough: b.getAttribute('data-borough') });
+      var b = e.target.closest('[data-borough]'); if (b) change({ borough: b.getAttribute('data-borough') });
     });
     $('pp-works').addEventListener('click', function (e) {
       var b = e.target.closest('[data-work]'); if (!b) return;
-      var k = b.getAttribute('data-work');
-      var w = Object.assign({}, state.inputs.works);
-      w[k] = !w[k];
-      change({ works: w });
+      var k = b.getAttribute('data-work'), works = state.inputs.works.slice(), i = works.indexOf(k);
+      if (i >= 0) works.splice(i, 1); else works.push(k);
+      change({ works: works });
     });
     $('pp-reviews').addEventListener('click', function (e) {
-      var b = e.target.closest('[data-review]'); if (!b) return;
-      change({ review: b.getAttribute('data-review') });
+      var b = e.target.closest('[data-review]'); if (b) change({ review: b.getAttribute('data-review') });
     });
-    $('pp-name').addEventListener('input', function (e) { change({ name: e.target.value }); });
-    $('pp-cost').addEventListener('input', function (e) { change({ cost: e.target.value }); });
-    $('pp-stories').addEventListener('input', function (e) { change({ stories: e.target.value }); });
-    $('pp-job').addEventListener('change', function (e) { change({ jobType: e.target.value }); });
-    $('pp-bldg').addEventListener('change', function (e) { change({ bldg: e.target.value }); });
-    $('pp-filed').addEventListener('change', function (e) { change({ filed: e.target.value }); });
+    [['pp-name', 'name'], ['pp-cost', 'cost'], ['pp-stories', 'stories'], ['pp-area', 'area'], ['pp-units', 'units']].forEach(function (f) {
+      $(f[0]).addEventListener('input', function (e) { var o = {}; o[f[1]] = e.target.value; change(o); });
+    });
+    [['pp-job', 'jobType'], ['pp-bldg', 'bldg'], ['pp-filed', 'filed']].forEach(function (f) {
+      $(f[0]).addEventListener('change', function (e) { var o = {}; o[f[1]] = e.target.value; change(o); });
+    });
 
     $('pp-form').addEventListener('submit', function (e) {
       e.preventDefault();
-      state.ran = true; state.justSaved = false;
-      syncForm(); renderResult();
-      if (narrow()) { scrollToEl($('result')); }
-      var h = $('result-heading'); if (h) h.focus({ preventScroll: true });
+      if (!state.loading) runForecast(true);
     });
     $('reset-btn').addEventListener('click', function () {
       var d = defaults(); d.name = '';
-      state.inputs = d; state.loadedId = null; state.ran = false; state.justSaved = false; state.isExample = false;
-      syncForm(); renderResult(); renderSaved();
+      state.inputs = d; state.isExample = false; state.result = null; state.error = null; state.changed = false; state.justSaved = false;
+      syncForm(); renderResult();
       scrollToEl($('forecast'));
       $('pp-name').focus({ preventScroll: true });
     });
@@ -600,6 +673,7 @@ tbody tr:last-child td { border-bottom: 0; }
   function change(patch) {
     Object.assign(state.inputs, patch);
     state.justSaved = false;
+    state.changed = !!state.result && JSON.stringify(state.inputs) !== state.resultFor;
     syncForm();
     renderResult();
   }
@@ -609,225 +683,211 @@ tbody tr:last-child td { border-bottom: 0; }
     function setVal(id, v) { var el = $(id); if (el.value !== String(v)) el.value = v; }
     setVal('pp-name', inp.name || '');
     setVal('pp-cost', inp.cost || '');
+    setVal('pp-area', inp.area || '');
+    setVal('pp-units', inp.units || '');
     setVal('pp-stories', inp.stories || '');
     setVal('pp-job', inp.jobType);
     setVal('pp-bldg', inp.bldg);
     setVal('pp-filed', inp.filed || '');
     document.querySelectorAll('[data-borough]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-borough') === inp.borough)); });
-    document.querySelectorAll('[data-work]').forEach(function (b) { b.setAttribute('aria-pressed', String(!!(inp.works && inp.works[b.getAttribute('data-work')]))); });
+    document.querySelectorAll('[data-work]').forEach(function (b) { b.setAttribute('aria-pressed', String(inp.works.indexOf(b.getAttribute('data-work')) >= 0)); });
     document.querySelectorAll('[data-review]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-review') === inp.review)); });
-    $('run-label').textContent = state.ran ? 'Update forecast' : 'Forecast approval date';
+    $('run-label').textContent = state.loading ? 'Forecasting…' : (state.result ? 'Update forecast' : 'Forecast approval date');
+    $('run-btn').disabled = state.loading;
     $('example-note').hidden = !state.isExample;
   }
 
   /* ---------- Result ---------- */
   function labelPos(pct) { return pct < 18 ? 'at-start' : pct > 82 ? 'at-end' : 'at-mid'; }
 
+  function emptyCard(title, text, extra) {
+    return '<div class="card empty"><div><h2>' + title + '</h2><p class="muted" style="margin-top:6px">' + text + '</p></div>' + (extra || '') + '</div>';
+  }
+
   function renderResult() {
+    syncForm();
     var box = $('result');
-    if (!state.ran) {
-      box.innerHTML =
-        '<div class="card empty">' +
-          '<div><h2>Your forecast will appear here</h2><p class="muted" style="margin-top:6px">Fill in the project details and press Forecast approval date.</p></div>' +
-          '<ul class="benefits">' +
-            '<li><span class="benefit-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span><span><strong>A likely approval date</strong><span class="small muted">With an honest range, not a single guess.</span></span></li>' +
-            '<li><span class="benefit-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="14" y2="12"></line><line x1="4" y1="18" x2="17" y2="18"></line></svg></span><span><strong>What is driving it</strong><span class="small muted">See which parts of your job add or save days.</span></span></li>' +
-            '<li><span class="benefit-icon" aria-hidden="true">' + ICON_SAVE + '</span><span><strong>Saved for next time</strong><span class="small muted">Reopen a forecast when plans change.</span></span></li>' +
-          '</ul>' +
-        '</div>';
+    if (state.loading) {
+      box.innerHTML = emptyCard('Calculating your forecast…', state.slow
+        ? 'Waking up the server. Free hosting can take up to a minute after a quiet period.'
+        : 'Running the model on your project.');
+      return;
+    }
+    if (state.error) {
+      box.innerHTML = emptyCard('The forecast did not go through', esc(state.error),
+        '<div><button type="button" class="btn btn-accent btn-sm" id="retry-btn">Try again</button></div>');
+      $('retry-btn').addEventListener('click', function () { runForecast(true); });
+      return;
+    }
+    if (!state.result) {
+      box.innerHTML = emptyCard('Your forecast will appear here', 'Fill in the project details and press Forecast approval date.');
       return;
     }
 
-    var inp = state.inputs;
-    var mm = model(inp);
-    var cost = num(inp.cost);
+    var f = state.result, inp = state.inputs, unit = unitWord(f.unit);
     var name = (inp.name || '').trim() || 'Untitled project';
-    var loadedExists = state.saved.some(function (p) { return p.id === state.loadedId; });
+    var chips = [inp.borough, JOB_LABEL[inp.jobType] || inp.jobType, inp.review, money(num(inp.cost)), 'Filing ' + fmtDate(inp.filed)];
 
-    // range chart scale
-    var max = Math.ceil(Math.max(mm.p90, mm.base) * 1.1 / 10) * 10;
-    function pct(x) { return Math.round(x / max * 1000) / 10; }
-    var r = { p10: pct(mm.p10), p90: pct(mm.p90), p25: pct(mm.p25), p75: pct(mm.p75), p50: pct(mm.p50), base: pct(mm.base) };
+    var hasBase = f.base_days !== null && f.base_days !== undefined;
+    var max = Math.ceil(Math.max(f.high_days, hasBase ? f.base_days : 0, 1) * 1.1 / 10) * 10;
+    function pct(x) { return Math.round(Math.max(0, x) / max * 1000) / 10; }
+    var r = { lo: pct(f.low_days), hi: pct(f.high_days), p50: pct(f.p50_days), base: hasBase ? pct(f.base_days) : 0 };
+    var aria = 'Forecast range from ' + fmtDays(f.low_days) + ' to ' + fmtDays(f.high_days) + ' ' + unit + ', most likely ' + fmtDays(f.p50_days) + ' ' + unit + '.';
 
-    // drivers
-    var maxAbs = 1;
-    mm.steps.forEach(function (s) { maxAbs = Math.max(maxAbs, Math.abs(s.delta)); });
-    var drivers = mm.steps.map(function (s) {
-      var d = Math.round(s.delta);
-      var w = Math.round(Math.abs(s.delta) / maxAbs * 500) / 10;
-      var slower = s.delta > 0;
-      var left = slower ? 50 : Math.round((50 - w) * 10) / 10;
-      var text = d === 0 ? 'No change' : (d > 0 ? '+' + d + ' days' : '−' + Math.abs(d) + ' days');
-      var cls = d === 0 ? 'val-none' : (slower ? 'val-add' : 'val-save');
-      return '<div class="driver"><div class="driver-label"><strong>' + esc(s.label) + '</strong><span>' + esc(s.value) + '</span></div>' +
-        '<div class="driver-bar" aria-hidden="true"><span class="' + (slower ? 'bar-add' : 'bar-save') + '" style="left:' + left + '%;width:' + w + '%"></span></div>' +
-        '<div class="driver-value num ' + cls + '">' + text + '</div></div>';
-    }).join('');
+    var drivers = '';
+    if (f.factors && f.factors.length) {
+      var maxAbs = Math.max.apply(null, f.factors.map(function (x) { return Math.abs(x.days); }).concat([1]));
+      drivers = f.factors.map(function (x) {
+        var w = Math.round(Math.abs(x.days) / maxAbs * 500) / 10, slower = x.days > 0;
+        return '<div class="driver"><div class="driver-label"><strong>' + esc(x.label) + '</strong></div>' +
+          '<div class="driver-bar" aria-hidden="true"><span class="' + (slower ? 'bar-add' : 'bar-save') + '" style="left:' + (slower ? 50 : 50 - w) + '%;width:' + w + '%"></span></div>' +
+          '<div class="driver-value num ' + (slower ? 'val-add' : 'val-save') + '">' + (slower ? '+' : '−') + fmtDays(Math.abs(x.days)) + ' ' + unit + '</div></div>';
+      }).join('');
+      drivers = '<section class="card" aria-labelledby="drivers-title">' +
+        '<div class="drivers-head"><div><h2 id="drivers-title">What is driving this forecast</h2><p class="small muted">Starting from the model\'s base value, each factor adds or saves ' + unit + '.</p></div>' +
+        '<span class="legend-keys tiny muted"><span class="key"><span class="swatch" style="background:var(--save)"></span>Saves ' + unit + '</span><span class="key"><span class="swatch" style="background:var(--add)"></span>Adds ' + unit + '</span></span></div>' +
+        (hasBase ? '<div class="driver base"><div class="driver-label"><strong>Base value</strong><span>Model intercept</span></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + fmtDays(f.base_days) + ' ' + unit + '</div></div>' : '') +
+        drivers +
+        '<div class="driver total"><div class="driver-label"><strong>Your forecast</strong></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + fmtDays(f.p50_days) + ' ' + unit + '</div></div>' +
+        '</section>';
+    }
 
-    // what-if
-    var altReview = inp.review === 'Professional Certification' ? 'Standard Plan Examination' : 'Professional Certification';
-    var alt = model(Object.assign({}, inp, { review: altReview }));
-    var diff = alt.p50 - mm.p50;
-    var altNote = altReview === 'Professional Certification'
-      ? 'Your architect or engineer certifies code compliance and DOB can audit the job later, so weigh the time saved against audit risk.'
-      : 'A DOB plan examiner reviews the plans before approval. Slower, but objections come up front instead of in an audit.';
-
-    var chips = [inp.borough, JOB_LABEL[inp.jobType] || inp.jobType, inp.review, money(cost), 'Filing ' + addDays(inp.filed, 0)];
-    var aria = 'Forecast range: 8 in 10 similar filings approved between ' + mm.p10 + ' and ' + mm.p90 + ' days; most likely ' + mm.p50 + ' days. DOB typical for this job type: ' + mm.base + ' days.';
+    var info = f.model_info || {};
+    var modelRows = '<div class="metric-row"><strong>Model</strong><span>' + esc(f.model) + '</span></div>';
+    if (info.r_squared != null) modelRows += '<div class="metric-row"><strong>R²</strong><span>' + Number(info.r_squared).toFixed(3) + '</span></div>';
+    if (info.n_obs != null) modelRows += '<div class="metric-row"><strong>Trained on</strong><span>' + Number(info.n_obs).toLocaleString('en-US') + ' filings</span></div>';
+    if (info.trained_on) modelRows += '<div class="metric-row"><strong>Trained on</strong><span>' + esc(info.trained_on) + ' filings</span></div>';
+    var notes = (f.notes || []).map(function (n) { return '<p class="small muted">' + esc(n) + '</p>'; }).join('');
 
     $('result').innerHTML =
+      (state.changed ? '<p class="small" role="status" style="padding:10px 14px;border-radius:10px;background:var(--notice)">You changed the inputs. Press <strong>Update forecast</strong> to refresh.</p>' : '') +
       '<div class="result-head">' +
         '<div class="result-title"><h2 id="result-heading" tabindex="-1">' + esc(name) + '</h2>' +
           '<ul class="chips">' + chips.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>' +
         '<div class="result-actions">' +
-          (state.justSaved ? '<span class="saved-msg" role="status"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>Saved · <a href="#saved">View</a></span>' : '') +
-          '<button type="button" class="btn btn-strong btn-sm" id="save-btn">' + ICON_SAVE + (loadedExists ? 'Update saved project' : 'Save project') + '</button>' +
+          (state.justSaved ? '<span class="saved-msg" role="status"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>Saved to database · <a href="#saved">View</a></span>' : '') +
+          '<button type="button" class="btn btn-strong btn-sm" id="save-btn"' + (state.saving ? ' disabled' : '') + '>' + ICON_SAVE + (state.saving ? 'Saving…' : 'Save project') + '</button>' +
         '</div>' +
       '</div>' +
-
       '<section class="card" aria-label="Forecast">' +
         '<div class="hero-grid">' +
           '<div class="hero-main">' +
-            '<span class="tag">Placeholder numbers</span>' +
             '<div class="kicker">Most likely approval date</div>' +
-            '<div class="big">' + addDays(inp.filed, mm.p50) + '</div>' +
-            '<p>About <strong>' + mm.p50 + ' days</strong> after filing on ' + addDays(inp.filed, 0) + '.</p>' +
-            '<p class="small muted">8 in 10 similar filings would be approved between ' + addDays(inp.filed, mm.p10) + ' and ' + addDays(inp.filed, mm.p90) + ' (' + mm.p10 + ' to ' + mm.p90 + ' days).</p>' +
+            '<div class="big">' + fmtDate(f.p50_date) + '</div>' +
+            '<p>About <strong>' + fmtDays(f.p50_days) + ' ' + unit + '</strong> after filing on ' + fmtDate(inp.filed) + '.</p>' +
+            '<p class="small muted">Likely range: ' + fmtDate(f.low_date) + ' to ' + fmtDate(f.high_date) + ' (' + fmtDays(f.low_days) + ' to ' + fmtDays(f.high_days) + ' ' + unit + ').</p>' +
           '</div>' +
           '<div class="hero-side">' +
             '<div class="kicker">Safe date to schedule your crew</div>' +
-            '<div class="mid">' + addDays(inp.filed, mm.p80) + '</div>' +
-            '<p class="small">80% chance of approval by then (' + mm.p80 + ' days after filing).</p>' +
+            '<div class="mid">' + fmtDate(f.high_date) + '</div>' +
+            '<p class="small">The late end of the range (' + fmtDays(f.high_days) + ' ' + unit + ' after filing).</p>' +
           '</div>' +
         '</div>' +
         '<div class="range">' +
-          '<div class="legend"><strong style="font-weight:600">Forecast range, days after filing</strong>' +
-            '<span class="legend-keys"><span class="key"><span class="swatch" style="background:var(--band-50)"></span>Middle 50%</span><span class="key"><span class="swatch" style="background:var(--band-80)"></span>8 in 10</span><span class="key"><span class="swatch-dash"></span>DOB typical</span></span></div>' +
+          '<div class="legend"><strong style="font-weight:600">Forecast range, ' + unit + ' after filing</strong>' +
+            '<span class="legend-keys"><span class="key"><span class="swatch" style="background:var(--band-80)"></span>Likely range</span>' + (hasBase ? '<span class="key"><span class="swatch-dash"></span>Base value</span>' : '') + '</span></div>' +
           '<div class="plot" role="img" aria-label="' + esc(aria) + '">' +
             '<div class="plot-track"></div>' +
-            '<div class="plot-band band-80" style="left:' + r.p10 + '%;width:' + Math.round((r.p90 - r.p10) * 10) / 10 + '%"></div>' +
-            '<div class="plot-band band-50" style="left:' + r.p25 + '%;width:' + Math.round((r.p75 - r.p25) * 10) / 10 + '%"></div>' +
-            '<div class="plot-base" style="left:' + r.base + '%"></div>' +
+            '<div class="plot-band band-80" style="left:' + r.lo + '%;width:' + Math.max(0, Math.round((r.hi - r.lo) * 10) / 10) + '%"></div>' +
+            (hasBase ? '<div class="plot-base" style="left:' + r.base + '%"></div>' : '') +
             '<div class="plot-mark" style="left:' + r.p50 + '%"></div>' +
-            '<div class="plot-label top ' + labelPos(r.p50) + '" style="left:' + r.p50 + '%">Likely · ' + mm.p50 + ' days</div>' +
-            '<div class="plot-label bottom ' + labelPos(r.base) + '" style="left:' + r.base + '%">DOB typical · ' + mm.base + ' days</div>' +
+            '<div class="plot-label top ' + labelPos(r.p50) + '" style="left:' + r.p50 + '%">Likely · ' + fmtDays(f.p50_days) + ' ' + unit + '</div>' +
+            (hasBase ? '<div class="plot-label bottom ' + labelPos(r.base) + '" style="left:' + r.base + '%">Base · ' + fmtDays(f.base_days) + '</div>' : '') +
           '</div>' +
-          '<div class="axis" aria-hidden="true"><span style="left:0">0</span><span class="at-mid" style="left:50%">' + Math.round(max / 2) + '</span><span style="right:0">' + max + ' days</span></div>' +
+          '<div class="axis" aria-hidden="true"><span style="left:0">0</span><span class="at-mid" style="left:50%">' + Math.round(max / 2) + '</span><span style="right:0">' + max + ' ' + unit + '</span></div>' +
         '</div>' +
       '</section>' +
-
-      '<section class="card" aria-labelledby="drivers-title">' +
-        '<div class="drivers-head"><div><h2 id="drivers-title">What is driving this forecast</h2><p class="small muted">Starting from a typical filing of this job type, each factor adds or saves days.</p></div>' +
-          '<span class="legend-keys tiny muted"><span class="key"><span class="swatch" style="background:var(--save)"></span>Saves days</span><span class="key"><span class="swatch" style="background:var(--add)"></span>Adds days</span></span></div>' +
-        '<div class="driver base"><div class="driver-label"><strong>Typical ' + esc(JOB_LABEL[inp.jobType] || inp.jobType) + ' filing</strong><span>Starting point (DOB typical)</span></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + mm.base + ' days</div></div>' +
-        drivers +
-        '<div class="driver total"><div class="driver-label"><strong>Your forecast</strong></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value num">' + mm.p50 + ' days</div></div>' +
-      '</section>' +
-
-      '<div class="pair">' +
-        '<section class="card" aria-labelledby="whatif-title">' +
-          '<h2 id="whatif-title">Try a change</h2>' +
-          '<p><strong style="font-weight:600">File under ' + esc(altReview) + '</strong></p>' +
-          '<p>Likely ' + alt.p50 + ' days instead of ' + mm.p50 + ' (' + (diff < 0 ? Math.abs(diff) + ' days sooner' : diff + ' days later') + ').</p>' +
-          '<p class="small muted">' + esc(altNote) + '</p>' +
-          '<div><button type="button" class="btn btn-outline btn-sm" id="apply-btn">Apply this change</button></div>' +
-        '</section>' +
-        '<section class="card" aria-labelledby="vs-title">' +
-          '<h2 id="vs-title">Forecast vs. the DOB average</h2>' +
-          '<div class="tiles">' +
-            '<div class="tile"><span class="tiny muted">DOB typical</span><span class="num">' + mm.base + ' days</span><span class="tiny muted">Same job type</span></div>' +
-            '<div class="tile"><span class="tiny muted">PermitPulse</span><span class="num">' + mm.p50 + ' days</span><span class="tiny muted">Your project</span></div>' +
-          '</div>' +
-          '<p class="small muted">Backtest accuracy: pending first model run.</p>' +
-        '</section>' +
-      '</div>';
+      drivers +
+      '<section class="card" aria-labelledby="model-title" style="display:flex;flex-direction:column;gap:6px">' +
+        '<h2 id="model-title" style="font-size:17px">About this forecast</h2>' +
+        '<div>' + modelRows + '</div>' + notes +
+      '</section>';
 
     $('save-btn').addEventListener('click', save);
-    $('apply-btn').addEventListener('click', function () {
-      change({ review: altReview });
-      var b = $('apply-btn'); if (b) b.focus({ preventScroll: true });
-    });
   }
 
   function save() {
-    var list = state.saved.slice();
-    var inputs = clone(state.inputs);
-    var id = state.loadedId, idx = -1;
-    for (var i = 0; i < list.length; i++) { if (list[i].id === id) idx = i; }
-    if (idx >= 0) { list[idx] = { id: id, inputs: inputs }; }
-    else { id = 'p' + Date.now(); list.unshift({ id: id, inputs: inputs }); }
-    state.saved = list; state.loadedId = id; state.justSaved = true; state.lastDeleted = null;
-    renderResult(); renderSaved();
-    var b = $('save-btn'); if (b) b.focus({ preventScroll: true });
+    state.saving = true; renderResult();
+    api('/api/projects', 'POST', requestBody(state.inputs)).then(function (data) {
+      state.result = data.forecast; state.resultFor = JSON.stringify(state.inputs); state.changed = false;
+      state.justSaved = true; state.lastDeleted = null;
+      return loadSaved();
+    }, function (err) {
+      state.error = err.message;
+    }).then(function () {
+      state.saving = false; renderResult();
+      var b = $('save-btn'); if (b) b.focus({ preventScroll: true });
+    });
   }
 
   /* ---------- Saved projects ---------- */
   function renderSaved() {
     $('nav-saved').textContent = 'Saved projects (' + state.saved.length + ')';
     var status = $('saved-status');
+    status.innerHTML = state.lastDeleted
+      ? '<span>Deleted “' + esc(state.lastDeleted.name || 'Untitled project') + '”.</span><button type="button" class="btn-link" id="undo-btn">Undo</button>'
+      : '';
     if (state.lastDeleted) {
-      status.innerHTML = '<span>Deleted “' + esc((state.lastDeleted.item.inputs.name || '').trim() || 'Untitled project') + '”.</span><button type="button" class="btn-link" id="undo-btn">Undo</button>';
       $('undo-btn').addEventListener('click', function () {
-        var d = state.lastDeleted; if (!d) return;
-        var list = state.saved.slice(); list.splice(Math.min(d.index, list.length), 0, d.item);
-        state.saved = list; state.lastDeleted = null;
-        renderSaved(); renderResult();
+        var d = state.lastDeleted; state.lastDeleted = null; renderSaved();
+        api('/api/projects', 'POST', requestBody(fromSaved(d))).then(loadSaved, function (err) { state.savedError = err.message; renderSaved(); });
       });
-    } else {
-      status.innerHTML = '';
     }
 
-    if (state.saved.length === 0) {
-      $('saved-list').innerHTML = '<div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding-block:40px">' +
+    var list = $('saved-list');
+    if (state.savedLoading) { list.innerHTML = '<div class="card"><p class="muted">Loading saved projects from the database…</p></div>'; return; }
+    if (state.savedError) {
+      list.innerHTML = '<div class="card" style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><p>' + esc(state.savedError) + '</p><button type="button" class="btn btn-outline btn-sm" id="saved-retry">Try again</button></div>';
+      $('saved-retry').addEventListener('click', function () { state.savedLoading = true; renderSaved(); loadSaved(); });
+      return;
+    }
+    if (!state.saved.length) {
+      list.innerHTML = '<div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;padding-block:40px">' +
         '<h3 style="font-size:18px">No saved projects yet</h3><p class="muted">Run a forecast and press Save project to keep it here.</p>' +
         '<a class="btn btn-accent btn-sm" href="#forecast">Start a forecast</a></div>';
       return;
     }
-
     var rows = state.saved.map(function (p) {
-      var pm = model(p.inputs);
-      var nm = (p.inputs.name || '').trim() || 'Untitled project';
+      var unit = unitWord(p.unit);
+      var range = p.low_days == null ? '—' : fmtDays(p.low_days) + '–' + fmtDays(p.high_days) + ' ' + unit;
       return '<tr>' +
-        '<td class="name">' + esc(nm) + '</td>' +
-        '<td data-label="Borough">' + esc(p.inputs.borough) + '</td>' +
-        '<td data-label="Job type">' + esc(JOB_LABEL[p.inputs.jobType] || p.inputs.jobType) + '</td>' +
-        '<td data-label="Filing date">' + addDays(p.inputs.filed, 0) + '</td>' +
-        '<td data-label="Likely approval" class="likely">' + addDays(p.inputs.filed, pm.p50) + '</td>' +
-        '<td data-label="8 in 10 range" class="range-cell">' + pm.p10 + '–' + pm.p90 + ' days</td>' +
+        '<td class="name">' + esc(p.name || 'Untitled project') + '</td>' +
+        '<td data-label="Borough">' + esc(p.borough) + '</td>' +
+        '<td data-label="Job type">' + esc(JOB_LABEL[p.job_type] || p.job_type || '—') + '</td>' +
+        '<td data-label="Filing date">' + fmtDate(p.planned_filing_date) + '</td>' +
+        '<td data-label="Likely approval" class="likely">' + (p.p50_date ? fmtDate(p.p50_date) : '—') + '</td>' +
+        '<td data-label="Range" class="range-cell">' + range + '</td>' +
         '<td class="actions"><div class="row-actions">' +
-          '<button type="button" class="btn btn-strong btn-sm" data-open="' + esc(p.id) + '">Open</button>' +
-          '<button type="button" class="btn btn-outline btn-sm btn-icon" data-del="' + esc(p.id) + '" aria-label="Delete ' + esc(nm) + '">' + ICON_TRASH + '</button>' +
-        '</div></td>' +
-      '</tr>';
+          '<button type="button" class="btn btn-strong btn-sm" data-open="' + p.id + '">Open</button>' +
+          '<button type="button" class="btn btn-outline btn-sm btn-icon" data-del="' + p.id + '" aria-label="Delete ' + esc(p.name || 'project') + '">' + ICON_TRASH + '</button>' +
+        '</div></td></tr>';
     }).join('');
-
-    $('saved-list').innerHTML =
+    list.innerHTML =
       '<div class="card saved-card"><div class="table-wrap"><table class="saved-table stack">' +
-        '<thead><tr><th scope="col">Project</th><th scope="col">Borough</th><th scope="col">Job type</th><th scope="col">Filing date</th><th scope="col">Likely approval</th><th scope="col">8 in 10 range</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>' +
+        '<thead><tr><th scope="col">Project</th><th scope="col">Borough</th><th scope="col">Job type</th><th scope="col">Filing date</th><th scope="col">Likely approval</th><th scope="col">Range</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>' +
         '<tbody>' + rows + '</tbody></table></div></div>';
   }
 
   function bindSaved() {
     $('saved-list').addEventListener('click', function (e) {
-      var open = e.target.closest('[data-open]');
-      var del = e.target.closest('[data-del]');
+      var open = e.target.closest('[data-open]'), del = e.target.closest('[data-del]');
       if (open) {
-        var id = open.getAttribute('data-open');
+        var id = Number(open.getAttribute('data-open'));
         var p = state.saved.filter(function (x) { return x.id === id; })[0]; if (!p) return;
-        state.inputs = clone(p.inputs); state.loadedId = p.id; state.ran = true; state.justSaved = false; state.isExample = false;
-        syncForm(); renderResult();
+        state.inputs = fromSaved(p); state.isExample = false;
+        syncForm();
         scrollToEl(narrow() ? $('result') : $('forecast'));
-        var h = $('result-heading'); if (h) h.focus({ preventScroll: true });
+        runForecast(true);
       } else if (del) {
-        var did = del.getAttribute('data-del');
-        var index = -1;
-        state.saved.forEach(function (x, i) { if (x.id === did) index = i; });
-        if (index < 0) return;
-        state.lastDeleted = { item: state.saved[index], index: index };
-        state.saved = state.saved.filter(function (x) { return x.id !== did; });
-        if (state.loadedId === did) state.loadedId = null;
-        renderSaved(); renderResult();
-        var u = $('undo-btn'); if (u) u.focus({ preventScroll: true });
+        var did = Number(del.getAttribute('data-del'));
+        var item = state.saved.filter(function (x) { return x.id === did; })[0]; if (!item) return;
+        del.disabled = true;
+        api('/api/projects/' + did, 'DELETE').then(function () {
+          state.lastDeleted = item;
+          return loadSaved();
+        }, function (err) { state.savedError = err.message; renderSaved(); }).then(function () {
+          var u = $('undo-btn'); if (u) u.focus({ preventScroll: true });
+        });
       }
     });
   }
@@ -842,8 +902,10 @@ tbody tr:last-child td { border-bottom: 0; }
   buildForm();
   bindSaved();
   syncForm();
-  renderResult();
   renderSaved();
+  runForecast(false);
+  loadSaved();
+  checkHealth();
 })();
 </script>
 
