@@ -11,10 +11,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Overpass:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
 /*
-  Look: NYC job site. Sidewalk-shed green for the brand band, hi-vis amber for the one thing
+  Look: an NYC job site. Sidewalk-shed green for the brand, hi-vis amber for the one thing
   that matters (the most likely date), quiet paper and ink everywhere else.
-  Type: Overpass (descended from US highway signage) for headings and dates,
-  Public Sans (the US government's typeface) for everything you read.
+  Type: Overpass (from US highway signage) for headings and dates, Public Sans for reading.
+  Motion: one load sequence, then motion only in answer to what the user does.
 */
 :root {
   --paper: #F3F5F2;
@@ -25,6 +25,7 @@
   --line: #DDE3DD;
   --line-strong: #9AA59E;
   --band-bg: #1E3B2C;
+  --band-glass: rgba(30, 59, 44, 0.86);
   --on-band: #FFFFFF;
   --on-band-muted: #BCCFC2;
   --primary: #1E3B2C;
@@ -43,13 +44,14 @@
   --bad: #B42318;
   --focus: #1F6F4A;
   --shadow: 0 1px 2px rgba(21, 32, 26, 0.05), 0 12px 32px -18px rgba(21, 32, 26, 0.28);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --font-display: 'Overpass', 'Public Sans', system-ui, sans-serif;
   --font-body: 'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #0E1411; --surface: #151E19; --surface-2: #1B2620; --ink: #E6ECE8; --muted: #A1AEA6;
-    --line: #26332C; --line-strong: #4E5D55; --band-bg: #13261C; --on-band-muted: #9FB7A8;
+    --line: #26332C; --line-strong: #4E5D55; --band-bg: #13261C; --band-glass: rgba(19, 38, 28, 0.86); --on-band-muted: #9FB7A8;
     --primary: #5FB98A; --primary-hover: #77C99D; --on-primary: #0E1411; --tint: #1D3328;
     --amber: #F2B53A; --amber-tint: #2E2614; --save: #5FB98A; --save-text: #7FD0A6;
     --add: #E08A3C; --add-text: #F0A764; --band: #2A4A39; --track: #1F2A24; --ok: #7FD0A6;
@@ -59,7 +61,7 @@
 }
 :root[data-theme="dark"] {
   --paper: #0E1411; --surface: #151E19; --surface-2: #1B2620; --ink: #E6ECE8; --muted: #A1AEA6;
-  --line: #26332C; --line-strong: #4E5D55; --band-bg: #13261C; --on-band-muted: #9FB7A8;
+  --line: #26332C; --line-strong: #4E5D55; --band-bg: #13261C; --band-glass: rgba(19, 38, 28, 0.86); --on-band-muted: #9FB7A8;
   --primary: #5FB98A; --primary-hover: #77C99D; --on-primary: #0E1411; --tint: #1D3328;
   --amber: #F2B53A; --amber-tint: #2E2614; --save: #5FB98A; --save-text: #7FD0A6;
   --add: #E08A3C; --add-text: #F0A764; --band: #2A4A39; --track: #1F2A24; --ok: #7FD0A6;
@@ -75,59 +77,72 @@ p, ol, dl, dd { margin: 0; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-.num { font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
 .small { font-size: 14px; }
 .wrap { max-width: 1200px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 40px); }
 
-/* Brand band */
-.band { background: var(--band-bg); color: var(--on-band); }
-.topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 24px; padding-block: 10px; }
+/* ---------- Top bar (sticky, turns to glass on scroll) ---------- */
+.topbar { position: sticky; top: 0; z-index: 20; background: var(--band-bg); color: var(--on-band); transition: background-color 0.3s, box-shadow 0.3s; }
+.scrolled .topbar { background: var(--band-glass); -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 30px -20px rgba(0, 0, 0, 0.6); }
+.topbar-row { display: flex; align-items: center; justify-content: space-between; gap: 8px 20px; min-height: 64px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--on-band); text-decoration: none; font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
-.brand-mark { width: 32px; height: 32px; border-radius: 8px; background: var(--amber); color: #15201A; display: inline-flex; align-items: center; justify-content: center; }
-.nav { display: flex; flex-wrap: wrap; margin-inline: -12px; }
-.nav a { min-height: 44px; padding-inline: 12px; display: inline-flex; align-items: center; color: var(--on-band-muted); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; }
-.nav a:hover { color: var(--on-band); }
-.hero { padding-block: clamp(28px, 6vw, 56px) 112px; display: flex; flex-direction: column; gap: 14px; }
-.hero h1 { font-size: clamp(34px, 6vw, 56px); font-weight: 800; line-height: 1.04; letter-spacing: -0.025em; max-width: 15ch; }
-.hero p { color: var(--on-band-muted); font-size: clamp(16px, 2vw, 18px); max-width: 58ch; }
-.hero .notice { display: inline-flex; align-items: flex-start; gap: 10px; align-self: flex-start; margin-top: 6px; padding: 8px 14px; border-radius: 10px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--on-band-muted); font-size: 13px; max-width: 72ch; }
-@media (min-width: 980px) {
-  .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "title text" "title notice"; column-gap: 64px; row-gap: 16px; align-items: end; }
-  .hero h1 { grid-area: title; }
-  .hero > p:not(.notice) { grid-area: text; }
-  .hero .notice { grid-area: notice; margin-top: 0; }
-}
-.notice .dot { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--amber); }
+.brand-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--amber); color: #15201A; display: inline-flex; align-items: center; justify-content: center; }
+.nav { display: flex; align-items: center; gap: 4px; }
+.nav a { min-height: 40px; padding-inline: 12px; display: inline-flex; align-items: center; color: var(--on-band-muted); font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 8px; transition: color 0.15s, background-color 0.15s; }
+.nav a:hover { color: var(--on-band); background: rgba(255, 255, 255, 0.07); }
+.live { display: inline-flex; align-items: center; gap: 8px; margin-left: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16); font-size: 13px; font-weight: 600; color: var(--on-band-muted); white-space: nowrap; }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--on-band-muted); position: relative; }
+.live.ok i { background: #6EE7A0; }
+.live.ok i::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid #6EE7A0; opacity: 0; animation: ping 2.4s ease-out 3; }
+.live.bad i { background: #F97066; }
+@keyframes ping { 0% { transform: scale(0.6); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }
+@media (max-width: 720px) { .nav a:not(#nav-saved) { display: none; } .live span { display: none; } .live { padding: 8px; margin-left: 0; } }
+
+/* ---------- Hero band ---------- */
+.band { position: relative; overflow: hidden; background: var(--band-bg); color: var(--on-band); }
+.band::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px); background-size: 56px 56px; -webkit-mask-image: radial-gradient(ellipse 70% 90% at 70% 30%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse 70% 90% at 70% 30%, #000 20%, transparent 75%); pointer-events: none; }
+.pulse-line { position: absolute; left: 0; right: 0; bottom: 100px; width: 100%; height: 72px; pointer-events: none; }
+.pulse-line path { fill: none; stroke: var(--amber); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: 0.55; }
+.hero { position: relative; padding-block: clamp(36px, 7vw, 72px) 180px; display: flex; flex-direction: column; gap: 18px; }
+.hero h1 { font-size: clamp(38px, 6.4vw, 68px); font-weight: 800; line-height: 1.02; letter-spacing: -0.03em; max-width: 13ch; }
+.hero h1 .w { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.hero h1 .w > span { display: inline-block; }
+.hero-text { display: flex; flex-direction: column; gap: 16px; max-width: 46ch; }
+.hero-text p { color: var(--on-band-muted); font-size: clamp(16px, 2vw, 18px); }
+.notice { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--on-band-muted); font-size: 13px; }
+.hero-text p.notice { font-size: 13px; }
+.notice i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
 .notice strong { color: var(--on-band); font-weight: 600; }
+@media (min-width: 980px) {
+  .hero { flex-direction: row; justify-content: space-between; align-items: flex-end; gap: 64px; }
+  .hero-text { padding-bottom: 8px; }
+}
 
-/* Page */
-.main { display: flex; flex-direction: column; gap: clamp(56px, 8vw, 88px); padding-bottom: 56px; }
-section[id] { scroll-margin-top: 16px; }
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: clamp(20px, 3.5vw, 28px); box-shadow: var(--shadow); min-width: 0; }
-.section { display: flex; flex-direction: column; gap: 20px; }
-.section-head { display: flex; flex-direction: column; gap: 6px; max-width: 64ch; }
-.section-head h2 { font-size: clamp(24px, 3.5vw, 30px); letter-spacing: -0.02em; }
-.section-head p { color: var(--muted); }
+/* ---------- Page ---------- */
+.main { display: flex; flex-direction: column; gap: clamp(64px, 9vw, 104px); padding-bottom: 72px; }
+section[id] { scroll-margin-top: 84px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: clamp(20px, 3.5vw, 28px); box-shadow: var(--shadow); min-width: 0; }
+.section { display: flex; flex-direction: column; gap: 24px; }
+.section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
+.section-head h2 { font-size: clamp(26px, 3.6vw, 34px); letter-spacing: -0.025em; }
+.section-head p { color: var(--muted); max-width: 52ch; }
 
-/* Workbench: form beside the forecast, overlapping the band */
-.workbench { margin-top: -80px; position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+.workbench { margin-top: -96px; position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
 @media (min-width: 980px) { .workbench { grid-template-columns: minmax(360px, 420px) minmax(0, 1fr); } }
 
-/* Form */
+/* ---------- Form ---------- */
 .form { display: flex; flex-direction: column; padding: 0; }
-.form-head { padding: 24px 28px 20px; display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid var(--line); }
+.form-head { padding: 22px 28px 18px; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
 .form-head h2 { font-size: 20px; }
-.form-head p { font-size: 14px; color: var(--muted); }
+.form-head p { font-size: 13px; color: var(--muted); }
 .group { padding: 22px 28px; display: flex; flex-direction: column; gap: 20px; border-bottom: 1px solid var(--line); }
 @media (max-width: 480px) { .form-head, .group, .form-actions { padding-inline: 20px !important; } }
 .field { min-width: 0; }
 .label, legend { display: block; padding: 0; margin-bottom: 8px; font-size: 14px; font-weight: 600; }
 fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
-.help { font-size: 13px; color: var(--muted); margin: -4px 0 10px; }
 .input, .select { width: 100%; height: 46px; padding-inline: 13px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 16px; transition: border-color 0.15s, box-shadow 0.15s; }
 .input:hover, .select:hover { border-color: var(--muted); }
-.input:focus, .select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--tint); }
+.input:focus, .select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--tint); }
 .input[type="date"] { -webkit-appearance: none; appearance: none; display: flex; align-items: center; min-width: 0; }
 .input::placeholder { color: var(--muted); opacity: 1; }
 .select-wrap { position: relative; }
@@ -138,27 +153,29 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .money .input { padding-left: 27px; }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
 .pills { display: flex; flex-wrap: wrap; gap: 8px; }
-.pill { min-height: 40px; padding-inline: 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: background-color 0.15s, border-color 0.15s, color 0.15s; }
+.pill { min-height: 40px; padding-inline: 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: background-color 0.18s, border-color 0.18s, color 0.18s, transform 0.12s; }
 .pill:hover { border-color: var(--primary); }
+.pill:active { transform: scale(0.96); }
 .pill .check { display: none; }
 .pill[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
 .pill[aria-pressed="true"] .check { display: inline-block; }
 .options { display: grid; gap: 10px; }
-.option { width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 15px; cursor: pointer; transition: border-color 0.15s, background-color 0.15s; }
+.option { width: 100%; text-align: left; display: flex; gap: 12px; align-items: flex-start; padding: 13px 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 15px; cursor: pointer; transition: border-color 0.18s, background-color 0.18s, box-shadow 0.18s; }
 .option:hover { border-color: var(--primary); }
 .option[aria-pressed="true"] { border-color: var(--primary); background: var(--tint); box-shadow: inset 0 0 0 1px var(--primary); }
-.radio { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; }
-.radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+.radio { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; transition: border-color 0.18s; }
+.radio::after { content: ""; width: 8px; height: 8px; border-radius: 50%; transform: scale(0); transition: transform 0.2s var(--ease); }
 .option[aria-pressed="true"] .radio { border-color: var(--primary); }
-.option[aria-pressed="true"] .radio::after { background: var(--primary); }
-.option-text { display: flex; flex-direction: column; gap: 2px; }
+.option[aria-pressed="true"] .radio::after { background: var(--primary); transform: scale(1); }
+.option-text { display: flex; flex-direction: column; gap: 1px; }
 .option-text strong { font-weight: 600; }
 .option-text span { font-size: 13px; color: var(--muted); }
 .form-actions { padding: 20px 28px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 
-/* Buttons */
-.btn { min-height: 46px; padding-inline: 20px; border-radius: 10px; border: 1px solid transparent; font-family: var(--font-body); font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; transition: background-color 0.15s, border-color 0.15s; }
-.btn:disabled { opacity: 0.6; cursor: progress; }
+/* ---------- Buttons ---------- */
+.btn { position: relative; min-height: 46px; padding-inline: 20px; border-radius: 10px; border: 1px solid transparent; font-family: var(--font-body); font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; text-decoration: none; transition: background-color 0.15s, border-color 0.15s, transform 0.12s; }
+.btn:active:not(:disabled) { transform: scale(0.98); }
+.btn:disabled { opacity: 0.65; cursor: progress; }
 .btn-primary { background: var(--primary); color: var(--on-primary); }
 .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
 .btn-outline { background: var(--surface); color: var(--ink); border-color: var(--line-strong); }
@@ -168,42 +185,80 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .btn-icon:hover:not(:disabled) { color: var(--bad); border-color: var(--bad); }
 .btn-link { min-height: 44px; padding-inline: 8px; background: none; border: 0; color: var(--muted); font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .btn-link:hover { color: var(--ink); }
-.spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
+.spin { width: 16px; height: 16px; flex: none; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
 
-/* Result column */
-.result { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.state { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-height: 240px; justify-content: center; }
+/* ---------- Result column ---------- */
+.result { display: flex; flex-direction: column; gap: 20px; min-width: 0; scroll-margin-top: 84px; }
+.state { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-height: 260px; justify-content: center; }
 .state h2 { font-size: 22px; }
-.state.loading h2 { display: inline-flex; align-items: center; gap: 12px; }
 .state.empty { border-style: dashed; box-shadow: none; }
 .state.error h2 { color: var(--bad); }
 .stale { padding: 12px 16px; border-radius: 12px; background: var(--amber-tint); border: 1px solid var(--amber); font-size: 14px; }
+.updating { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 12px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 14px; font-weight: 600; }
+.updating .muted { font-weight: 400; }
+.result.busy .panel { opacity: 0.45; transition: opacity 0.25s; pointer-events: none; }
+
+/* Skeleton while the first forecast loads */
+.sk { display: block; border-radius: 8px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+.skeleton { display: flex; flex-direction: column; gap: 14px; }
+.skeleton .wait { margin-top: 10px; font-size: 14px; color: var(--muted); }
+
+/* Request path: browser -> API -> database */
+.arch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(36px, 0.6fr) minmax(0, 1fr) minmax(36px, 0.6fr) minmax(0, 1fr); align-items: center; }
+.node { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); min-width: 0; transition: border-color 0.3s, box-shadow 0.3s; }
+.node svg { flex: none; color: var(--save); }
+.node > div { min-width: 0; }
+.node strong { display: block; font-size: 14px; font-weight: 600; }
+.node span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wire { position: relative; height: 2px; background: repeating-linear-gradient(90deg, var(--line-strong) 0 4px, transparent 4px 8px); }
+.wire b { position: absolute; top: 50%; left: 0; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px var(--amber-tint); opacity: 0; }
+.arch.loop .wire b { animation: travel 1.2s var(--ease) infinite; }
+.arch.loop .wire + .node + .wire b { animation-delay: 0.6s; }
+.arch.run .wire b { animation: travel 0.55s var(--ease) 1 both; }
+.arch.run .wire + .node + .wire b { animation-delay: 0.45s; }
+.arch.run .node { animation: lit 1.4s var(--ease) both; }
+.arch.run .node:nth-child(3) { animation-delay: 0.4s; }
+.arch.run .node:nth-child(5) { animation-delay: 0.85s; }
+@keyframes travel { 0% { left: 0; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+@keyframes lit { 0%, 100% { border-color: var(--line); box-shadow: none; } 30% { border-color: var(--amber); box-shadow: 0 0 0 4px var(--amber-tint); } }
+.arch.mini .node { padding: 8px 10px; justify-content: center; }
+@media (max-width: 560px) {
+  .arch:not(.mini) { grid-template-columns: minmax(0, 1fr); }
+  .arch:not(.mini) .wire { width: 2px; height: 22px; margin-left: 28px; background: repeating-linear-gradient(180deg, var(--line-strong) 0 4px, transparent 4px 8px); }
+  .arch:not(.mini) .wire b { left: 50%; top: 0; }
+  .arch.run:not(.mini) .wire b { animation-name: travelDown; }
+  .arch.mini { grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr) 20px minmax(0, 1fr); }
+  .arch.mini .node { padding: 8px 4px; }
+  .arch.mini .node strong { font-size: 12px; }
+}
+@keyframes travelDown { 0% { top: 0; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+/* Forecast panel */
+.forecast { padding: 0; overflow: hidden; }
 .result-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 16px; padding: 20px clamp(20px, 4vw, 36px); border-bottom: 1px solid var(--line); }
-.result-title { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.result-title { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .result-title h2 { font-size: 20px; letter-spacing: -0.015em; overflow-wrap: anywhere; }
 .result-title h2:focus { outline: none; }
 .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .chips li { padding: 3px 10px; border-radius: 999px; background: var(--surface-2); color: var(--muted); font-size: 13px; }
 .result-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
-.saved-msg { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; font-size: 14px; font-weight: 600; color: var(--ok); }
+.saved-msg { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; font-size: 14px; font-weight: 600; color: var(--ok); animation: rise 0.4s var(--ease) both; }
 .saved-msg a { color: inherit; font-weight: 500; margin-left: 4px; text-underline-offset: 3px; }
-
-/* Forecast */
-.forecast { padding: 0; overflow: hidden; }
 .fc-body { padding: clamp(22px, 4vw, 36px); }
 .kicker { font-size: 14px; font-weight: 600; color: var(--muted); }
-.big { margin-top: 6px; font-family: var(--font-display); font-size: clamp(44px, 8vw, 72px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-.fc-sub { margin-top: 12px; font-size: 16px; }
-.fc-sub strong { font-weight: 700; }
+.big { margin-top: 6px; font-family: var(--font-display); font-size: clamp(44px, 8.2vw, 80px); font-weight: 800; line-height: 1; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.big > span { display: inline-block; }
+.fc-sub { margin-top: 14px; font-size: 16px; }
+.fc-sub strong { font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .timeline { position: relative; height: 100px; margin: 36px 0 8px; }
 .tl-track, .tl-band, .tl-mark, .tl-pin { position: absolute; }
 .tl-track { left: 0; right: 0; top: 34px; height: 12px; border-radius: 999px; background: var(--track); }
-.tl-band { top: 34px; height: 12px; border-radius: 999px; background: var(--band); }
+.tl-band { top: 34px; height: 12px; border-radius: 999px; background: var(--band); transform-origin: left center; }
 .tl-pin { top: 30px; width: 2px; height: 20px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
-.tl-mark { top: 24px; width: 16px; height: 32px; margin-left: -8px; border-radius: 8px; background: var(--amber); box-shadow: 0 0 0 3px var(--surface); }
+.tl-mark { top: 24px; width: 16px; height: 32px; margin-left: -8px; border-radius: 8px; background: var(--amber); box-shadow: 0 0 0 3px var(--surface), 0 6px 16px -4px rgba(242, 169, 0, 0.6); }
 .tl-label { position: absolute; white-space: nowrap; font-size: 13px; line-height: 1.3; }
 .tl-label.top { top: 0; font-size: 14px; font-weight: 700; }
 .tl-label.bottom { top: 60px; color: var(--muted); }
@@ -218,9 +273,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .fc-facts dd { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .fc-facts dd.sub { font-family: var(--font-body); font-size: 13px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
 
-/* Drivers */
-.drivers-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 10px 16px; margin-bottom: 12px; }
-.drivers-head > div { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+/* Factors */
+.drivers-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; margin-bottom: 12px; }
 .drivers-head h2, .panel-title { font-size: 19px; }
 .legend-keys { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); }
 .key { display: inline-flex; align-items: center; gap: 6px; }
@@ -232,8 +286,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .driver-bar { grid-area: bar; position: relative; height: 20px; }
 .driver-bar::before { content: ""; position: absolute; left: 50%; top: -6px; bottom: -6px; width: 1px; background: var(--line-strong); }
 .driver-bar span { position: absolute; top: 3px; height: 14px; border-radius: 4px; }
-.bar-save { background: var(--save); }
-.bar-add { background: var(--add); }
+.bar-save { background: var(--save); transform-origin: right center; }
+.bar-add { background: var(--add); transform-origin: left center; }
 .driver-value { grid-area: value; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .val-save { color: var(--save-text); }
 .val-add { color: var(--add-text); }
@@ -244,13 +298,30 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
   .driver { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "label value" "bar bar"; }
   .driver.base .driver-bar, .driver.total .driver-bar { display: none; }
 }
-
-/* About the model */
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px 24px; margin: 14px 0 12px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px 24px; margin-top: 14px; }
 .facts dt { font-size: 13px; color: var(--muted); }
 .facts dd { font-weight: 600; font-variant-numeric: tabular-nums; }
+.served { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.served strong { color: var(--ink); font-weight: 600; }
 
-/* Tables */
+/* Forecast reveal: plays once when a new forecast arrives */
+@keyframes rise { from { opacity: 0; transform: translateY(0.45em); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes grow { from { transform: scaleX(0); } }
+@keyframes drop { from { opacity: 0; transform: translateY(-14px) scale(0.7); } }
+@keyframes up { from { opacity: 0; transform: translateY(18px); } }
+.reveal > .panel { animation: up 0.6s var(--ease) both; }
+.reveal > .panel:nth-of-type(2) { animation-delay: 0.12s; }
+.reveal > .panel:nth-of-type(3) { animation-delay: 0.2s; }
+.reveal .big > span { animation: rise 0.6s var(--ease) both; animation-delay: calc(0.15s + var(--i) * 28ms); }
+.reveal .tl-band { animation: grow 0.9s var(--ease) 0.35s both; }
+.reveal .tl-mark { animation: drop 0.5s var(--ease) 1s both; }
+.reveal .tl-label, .reveal .tl-pin { animation: fade 0.5s ease 0.9s both; }
+.reveal .fc-facts > div { animation: up 0.5s var(--ease) both; animation-delay: 1.05s; }
+.reveal .fc-facts > div + div { animation-delay: 1.15s; }
+.reveal .driver-bar span { animation: grow 0.7s var(--ease) both; animation-delay: calc(0.45s + var(--i) * 60ms); }
+
+/* ---------- Saved projects ---------- */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 th { text-align: left; font-size: 13px; font-weight: 600; color: var(--muted); padding: 14px 18px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface-2); }
@@ -260,23 +331,18 @@ tbody tr:last-child td { border-bottom: 0; }
 .saved-table { min-width: 780px; }
 .saved-table tbody tr { transition: background-color 0.15s; }
 .saved-table tbody tr:hover { background: var(--surface-2); }
+.saved-table tr.fresh { animation: flash 1.8s ease both; }
+@keyframes flash { 0%, 40% { background: var(--amber-tint); } }
 .saved-table td.name { font-weight: 600; }
 .saved-table .likely { font-weight: 700; white-space: nowrap; }
 .saved-table .range-cell { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 14px; }
 .row-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.map-table td:nth-child(2) { font-size: 13px; color: var(--muted); }
-.map-table td:nth-child(2) code { font-family: inherit; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); color: var(--ink); }
-.map-table td:nth-child(3) { color: var(--muted); font-size: 14px; }
-.map-table th, .map-table td { padding-inline: 0 16px; background: none; }
-.status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 10px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }
-.status:empty { display: none; }
 @media (max-width: 800px) {
   .stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .stack, .stack tbody, .stack tr, .stack td { display: block; width: 100%; min-width: 0; }
   .stack td { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; border: 0; text-align: right; }
-  .stack td::before { content: attr(data-label); font-size: 13px; color: var(--muted); text-align: left; flex: none; }
+  .stack td::before { content: attr(data-label); font-size: 13px; font-weight: 400; color: var(--muted); text-align: left; flex: none; }
   .stack td.name { text-align: left; font-size: 16px; padding-bottom: 8px; }
-  .stack td.likely::before { font-weight: 400; }
   .stack td.name::before, .stack td.actions::before { content: none; }
   .saved-card { background: none; border: 0; border-radius: 0; box-shadow: none; }
   .saved-table tbody { display: flex; flex-direction: column; gap: 12px; }
@@ -291,37 +357,77 @@ tbody tr:last-child td { border-bottom: 0; }
   .map-table td:nth-child(1)::before { content: none; }
 }
 
-/* How it works */
-.steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-.step { display: flex; flex-direction: column; gap: 10px; }
-.step-no { font-family: var(--font-display); font-size: 40px; font-weight: 800; line-height: 1; color: var(--save); letter-spacing: -0.03em; }
-.step h3 { font-size: 20px; }
-.step p { font-size: 14px; }
-.step a { font-size: 14px; font-weight: 600; color: var(--save-text); text-underline-offset: 3px; align-self: flex-start; min-height: 44px; display: inline-flex; align-items: center; margin-top: auto; }
-.how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-@media (min-width: 1000px) { .how-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
-.how-grid .panel { display: flex; flex-direction: column; gap: 6px; }
-.metric-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
-.metric-row:last-child { border-bottom: 0; }
-.metric-row span:last-child { font-family: var(--font-display); font-size: 18px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.metric-row small { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+/* ---------- How it works ---------- */
+.steps { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+.step { display: flex; flex-direction: column; gap: 8px; }
+.step-no { font-family: var(--font-display); font-size: 15px; font-weight: 800; width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--tint); color: var(--save-text); margin-bottom: 6px; }
+.step h3 { font-size: 19px; }
+.step p { font-size: 14px; color: var(--muted); }
+.step a { font-size: 14px; font-weight: 600; color: var(--save-text); text-underline-offset: 3px; align-self: flex-start; }
+.how-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+@media (min-width: 1000px) { .how-grid { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; } }
+.how-grid .panel { display: flex; flex-direction: column; gap: 18px; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; }
+.panel-head p { font-size: 14px; color: var(--muted); }
+.ping-result { min-height: 22px; font-size: 14px; color: var(--muted); }
+.ping-result strong { color: var(--ink); }
+.metric { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-block: 14px; border-top: 1px solid var(--line); }
+.metric:first-child { border-top: 0; padding-top: 0; }
+.metric div { font-size: 14px; font-weight: 600; }
+.metric small { display: block; font-size: 13px; font-weight: 400; color: var(--muted); }
+.metric > span { font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.metric > span small { display: inline; font-family: var(--font-body); font-size: 13px; font-weight: 500; letter-spacing: 0; }
+details.panel { padding: 0; }
+details summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px clamp(20px, 3.5vw, 28px); font-weight: 600; }
+details summary::-webkit-details-marker { display: none; }
+details summary svg { transition: transform 0.25s var(--ease); color: var(--muted); }
+details[open] summary svg { transform: rotate(180deg); }
+details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
+.map-table th, .map-table td { padding-inline: 0 16px; background: none; }
+.map-table td:nth-child(2) code { font-family: inherit; font-size: 13px; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); }
+.map-table td:nth-child(3) { color: var(--muted); font-size: 14px; }
 
-/* Footer */
+/* ---------- Toasts ---------- */
+.toasts { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(92vw, 440px); pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 18px; border-radius: 14px; background: #15201A; color: #FFFFFF; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.55); font-size: 14px; animation: toastIn 0.35s var(--ease) both; }
+.toast.out { animation: toastOut 0.25s ease both; }
+.toast span { flex: 1; }
+.toast button { min-height: 36px; padding-inline: 12px; border: 0; border-radius: 9px; background: rgba(255, 255, 255, 0.12); color: #FFFFFF; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; }
+.toast button:hover { background: rgba(255, 255, 255, 0.2); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(8px); } }
+
+/* ---------- Footer ---------- */
 .footer { border-top: 1px solid var(--line); background: var(--surface); }
-.footer-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding-block: 22px 28px; font-size: 13px; color: var(--muted); }
+.footer-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; padding-block: 24px 30px; font-size: 13px; color: var(--muted); }
 .footer-row strong { color: var(--ink); }
+.footer-row a { color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+.foot-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
 .db { display: inline-flex; align-items: center; gap: 8px; }
 .db::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); }
 .db.ok::before { background: var(--save); }
 .db.bad::before { background: var(--bad); }
 
-@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+/* ---------- Page load sequence ---------- */
+@keyframes wordUp { from { transform: translateY(105%); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .hero h1 .w > span { animation: wordUp 0.8s var(--ease) both; animation-delay: calc(0.1s + var(--i) * 70ms); }
+  .hero-text { animation: up 0.7s var(--ease) 0.55s both; }
+  .pulse-line path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 2.2s cubic-bezier(0.6, 0, 0.3, 1) 0.4s forwards; }
+  .workbench { animation: up 0.8s var(--ease) 0.7s both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; transition-duration: 0.01ms !important; }
+  .spin, .sk, .arch.loop .wire b { animation-duration: 1.6s !important; animation-iteration-count: infinite !important; }
+}
 </style>
 </head>
 <body>
 
-<header class="band">
-  <div class="wrap topbar">
+<header class="topbar">
+  <div class="wrap topbar-row">
     <a class="brand" href="#forecast">
       <span class="brand-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 7 12 9.5 6 14.5 18 17 12 22 12"></polyline></svg></span>
       PermitPulse
@@ -330,14 +436,23 @@ tbody tr:last-child td { border-bottom: 0; }
       <a href="#forecast">Forecast</a>
       <a href="#saved" id="nav-saved">Saved projects</a>
       <a href="#how">How it works</a>
+      <span class="live" id="db-pill" title="Database status"><i aria-hidden="true"></i><span id="db-pill-text">Connecting</span></span>
     </nav>
   </div>
-  <div class="wrap hero">
-    <h1 id="page-title">When will your NYC permit be approved?</h1>
-    <p>Describe the job as you would file it in DOB NOW. PermitPulse estimates the approval date from similar past filings, with a realistic range and the factors behind it.</p>
-    <p class="notice"><span class="dot" aria-hidden="true"></span><span><strong>Skeleton app.</strong> Forecasts come from our first regression model, stored in our database. A stronger model is in training.</span></p>
-  </div>
 </header>
+
+<div class="band">
+  <svg class="pulse-line" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+    <path pathLength="1" d="M0 80 H560 L590 80 L612 30 L642 112 L668 8 L694 96 L716 80 H1440"></path>
+  </svg>
+  <div class="wrap hero">
+    <h1 id="page-title" aria-label="When will your NYC permit be approved?"><span class="w"><span style="--i:0">When</span></span> <span class="w"><span style="--i:1">will</span></span> <span class="w"><span style="--i:2">your</span></span> <span class="w"><span style="--i:3">NYC</span></span> <span class="w"><span style="--i:4">permit</span></span> <span class="w"><span style="--i:5">be</span></span> <span class="w"><span style="--i:6">approved?</span></span></h1>
+    <div class="hero-text">
+      <p>Get your likely DOB approval date, a realistic range, and what drives it. Learned from 263,165 past filings.</p>
+      <p class="notice"><i aria-hidden="true"></i><span><strong>Skeleton build.</strong> Early regression model, served from our database.</span></p>
+    </div>
+  </div>
+</div>
 
 <main class="wrap main">
 
@@ -345,7 +460,7 @@ tbody tr:last-child td { border-bottom: 0; }
     <form id="pp-form" class="panel form" novalidate>
       <div class="form-head">
         <h2>Your project</h2>
-        <p id="example-note">An example project is filled in. Change any field, or start over.</p>
+        <p id="example-note">Example filled in</p>
       </div>
 
       <div class="group">
@@ -353,12 +468,10 @@ tbody tr:last-child td { border-bottom: 0; }
           <label class="label" for="pp-name">Project name</label>
           <input class="input" id="pp-name" type="text" autocomplete="off" placeholder="e.g. 214 Bergen St rear extension">
         </div>
-
         <fieldset>
           <legend>Borough</legend>
           <div class="pills" id="pp-boroughs"></div>
         </fieldset>
-
         <div class="field">
           <label class="label" for="pp-job">Job type</label>
           <div class="select-wrap">
@@ -372,7 +485,6 @@ tbody tr:last-child td { border-bottom: 0; }
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </div>
         </div>
-
         <fieldset>
           <legend>Review path</legend>
           <div class="options" id="pp-reviews"></div>
@@ -382,7 +494,6 @@ tbody tr:last-child td { border-bottom: 0; }
       <div class="group">
         <fieldset>
           <legend>Work types</legend>
-          <p class="help">Select every type of work on this filing.</p>
           <div class="pills" id="pp-works"></div>
         </fieldset>
       </div>
@@ -440,82 +551,101 @@ tbody tr:last-child td { border-bottom: 0; }
   <section id="saved" class="section" aria-labelledby="saved-title">
     <div class="section-head">
       <h2 id="saved-title">Saved projects</h2>
-      <p>Projects you save are stored in our database. Open one to load it back into the form and forecast it again.</p>
+      <p>Stored in our Supabase database. Open one to forecast it again.</p>
     </div>
-    <div class="status" id="saved-status" role="status"></div>
     <div id="saved-list"></div>
   </section>
 
   <section id="how" class="section" aria-labelledby="how-title">
     <div class="section-head">
-      <h2 id="how-title">How the forecast works</h2>
-      <p>PermitPulse learns from New York City's public record of building job filings: when each job was filed, when DOB approved it, and what kind of job it was.</p>
+      <h2 id="how-title">How it works</h2>
     </div>
 
     <ol class="steps">
       <li class="panel step">
         <span class="step-no" aria-hidden="true">1</span>
-        <h3>Collect the filings</h3>
-        <p>NYC DOB NOW: Build job application filings from NYC Open Data, about 967,000 filings since 2016.</p>
-        <p class="muted">Our Supabase database stores the model, a sample of 2,000 training filings, and every project saved here.</p>
+        <h3>Public DOB filings</h3>
+        <p>967,000 NYC DOB NOW job filings since 2016, from NYC Open Data.</p>
         <a href="https://data.cityofnewyork.us/d/w9ak-ipjd" target="_blank" rel="noopener">View the dataset</a>
       </li>
       <li class="panel step">
         <span class="step-no" aria-hidden="true">2</span>
-        <h3>Fit the model</h3>
-        <p><strong>Now:</strong> a linear regression trained on 263,165 filings, using cost, floor area, borough, work types, weekend filing and dwelling units. It is weak (R² 0.04), so its ranges are wide.</p>
-        <p><strong>Next:</strong> gradient-boosted quantile models for the 10th, 50th and 90th percentile in business days. The site switches to them automatically once they are trained.</p>
+        <h3>A model of the wait</h3>
+        <p>Today a linear regression. Next, quantile models that forecast business days with an honest range.</p>
       </li>
       <li class="panel step">
         <span class="step-no" aria-hidden="true">3</span>
-        <h3>Test on newer filings</h3>
-        <p>We train on older filings and test on newer ones, never the reverse, so the test looks like forecasting a real future permit.</p>
-        <p class="muted">We report the typical error in days and how often real approvals land inside the forecast range.</p>
+        <h3>Tested on the future</h3>
+        <p>Trained on older filings and tested on newer ones, just like a real forecast.</p>
       </li>
     </ol>
 
     <div class="how-grid">
       <div class="panel">
-        <h3 class="panel-title">Your inputs and the DOB fields behind them</h3>
-        <p class="small muted">Every question on the form maps to a column in the public dataset.</p>
-        <div class="table-wrap">
-          <table class="map-table stack">
-            <thead><tr><th scope="col">Form question</th><th scope="col">DOB NOW column</th><th scope="col">Values</th></tr></thead>
-            <tbody>
-              <tr><td>Borough</td><td data-label="Column"><code>borough</code></td><td data-label="Values">The five boroughs</td></tr>
-              <tr><td>Job type</td><td data-label="Column"><code>job_type</code></td><td data-label="Values">Alteration, New Building, Full Demolition and more</td></tr>
-              <tr><td>Work types</td><td data-label="Column"><code>*_work_type</code></td><td data-label="Values">One yes/no column per work type</td></tr>
-              <tr><td>Review path</td><td data-label="Column"><code>filing_review_type</code></td><td data-label="Values">Professional Certification or Standard Plan Examination</td></tr>
-              <tr><td>Job cost</td><td data-label="Column"><code>initial_cost</code></td><td data-label="Values">Dollar amount on the filing</td></tr>
-              <tr><td>Floor area</td><td data-label="Column"><code>total_construction_floor_area</code></td><td data-label="Values">Square feet of work</td></tr>
-              <tr><td>Dwelling units</td><td data-label="Column"><code>proposed_dwelling_units</code></td><td data-label="Values">Units after the work</td></tr>
-              <tr><td>Building type</td><td data-label="Column"><code>building_type</code></td><td data-label="Values">1, 2 or 3 Family, Other</td></tr>
-              <tr><td>Stories</td><td data-label="Column"><code>proposed_no_of_stories</code></td><td data-label="Values">Stories after the work</td></tr>
-              <tr><td>Filing date</td><td data-label="Column"><code>filing_date</code></td><td data-label="Values">Starts the clock; captures season and backlog</td></tr>
-            </tbody>
-          </table>
+        <div class="panel-head">
+          <div>
+            <h3 class="panel-title">The live stack</h3>
+            <p>Every forecast travels this path.</p>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" id="ping-btn">Test the connection</button>
         </div>
+        <div class="arch" id="arch">
+          <div class="node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line></svg><div><strong>Browser</strong><span>HTML, CSS, JS</span></div></div>
+          <div class="wire" aria-hidden="true"><b></b></div>
+          <div class="node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 4 14 12 14 11 22 20 10 12 10 13 2"></polygon></svg><div><strong>FastAPI</strong><span>On Render</span></div></div>
+          <div class="wire" aria-hidden="true"><b></b></div>
+          <div class="node"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"></path><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"></path></svg><div><strong>Postgres</strong><span>On Supabase</span></div></div>
+        </div>
+        <p class="ping-result" id="ping-result" role="status"></p>
       </div>
       <div class="panel">
-        <h3 class="panel-title">Model results</h3>
-        <p class="small muted">The quantile model's numbers were reported by our teammate on 2025 filings. We will check them again after training.</p>
         <div>
-          <div class="metric-row"><strong>Linear regression<small>Live now</small></strong><span>R² 0.044</span></div>
-          <div class="metric-row"><strong>Quantile model<small>Typical error</small></strong><span>13.3 business days</span></div>
-          <div class="metric-row"><strong>Quantile model<small>Approvals inside its range, Standard Plan</small></strong><span>85.3%</span></div>
+          <h3 class="panel-title">Model results</h3>
+          <p class="small muted">Quantile numbers reported by our teammate on 2025 filings.</p>
+        </div>
+        <div>
+          <div class="metric"><div>Linear regression<small>Live now, fit</small></div><span>R² 0.044</span></div>
+          <div class="metric"><div>Quantile model<small>Typical error</small></div><span>13.3 <small>business days</small></span></div>
+          <div class="metric"><div>Quantile model<small>Approvals inside range</small></div><span>85.3%</span></div>
         </div>
       </div>
     </div>
+
+    <details class="panel">
+      <summary>The DOB fields behind each input<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></summary>
+      <div class="table-wrap">
+        <table class="map-table stack">
+          <thead><tr><th scope="col">Form question</th><th scope="col">DOB NOW column</th><th scope="col">Values</th></tr></thead>
+          <tbody>
+            <tr><td>Borough</td><td data-label="Column"><code>borough</code></td><td data-label="Values">The five boroughs</td></tr>
+            <tr><td>Job type</td><td data-label="Column"><code>job_type</code></td><td data-label="Values">Alteration, New Building, Full Demolition and more</td></tr>
+            <tr><td>Work types</td><td data-label="Column"><code>*_work_type</code></td><td data-label="Values">One yes/no column per work type</td></tr>
+            <tr><td>Review path</td><td data-label="Column"><code>filing_review_type</code></td><td data-label="Values">Professional Certification or Standard Plan Examination</td></tr>
+            <tr><td>Job cost</td><td data-label="Column"><code>initial_cost</code></td><td data-label="Values">Dollar amount on the filing</td></tr>
+            <tr><td>Floor area</td><td data-label="Column"><code>total_construction_floor_area</code></td><td data-label="Values">Square feet of work</td></tr>
+            <tr><td>Dwelling units</td><td data-label="Column"><code>proposed_dwelling_units</code></td><td data-label="Values">Units after the work</td></tr>
+            <tr><td>Building type</td><td data-label="Column"><code>building_type</code></td><td data-label="Values">1, 2 or 3 Family, Other</td></tr>
+            <tr><td>Stories</td><td data-label="Column"><code>proposed_no_of_stories</code></td><td data-label="Values">Stories after the work</td></tr>
+            <tr><td>Filing date</td><td data-label="Column"><code>filing_date</code></td><td data-label="Values">Starts the clock</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
   </section>
 
 </main>
 
 <footer class="footer">
   <div class="wrap footer-row">
-    <p><strong>PermitPulse</strong> is a student project for NYU TECH-UB 24, Fall 2026. Data from NYC DOB NOW: Build job filings on NYC Open Data.</p>
-    <p class="db" id="db-wrap"><span id="db-status">Checking the database…</span></p>
+    <p><strong>PermitPulse</strong>, built by Daniyal, Walter, Allan, Jiayi and Justin for NYU TECH-UB 24.</p>
+    <div class="foot-links">
+      <a href="https://github.com/DaniyalMlk/permitpulse" target="_blank" rel="noopener">Source on GitHub</a>
+      <p class="db" id="db-wrap"><span id="db-status">Checking the database…</span></p>
+    </div>
   </div>
 </footer>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
 (function () {
@@ -533,15 +663,16 @@ tbody tr:last-child td { border-bottom: 0; }
   ];
   var BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
   var JOB_LABEL = { 'Alteration': 'Alteration', 'Alteration CO': 'Alteration CO', 'New Building': 'New Building', 'ALT-CO': 'ALT-CO (existing elements remain)', 'Full Demolition': 'Full Demolition' };
-  var MODEL_LABEL = { 'linear_regression': 'Linear regression', 'histgb_quantile': 'Gradient-boosted quantile model' };
+  var MODEL_LABEL = { 'linear_regression': 'Linear regression', 'histgb_quantile': 'Quantile model' };
   var REVIEWS = [
-    { v: 'Professional Certification', desc: 'Your architect or engineer certifies the plans. DOB may audit the job after approval.' },
-    { v: 'Standard Plan Examination', desc: 'A DOB plan examiner reviews the plans before approval.' }
+    { v: 'Professional Certification', desc: 'Your architect or engineer certifies the plans.' },
+    { v: 'Standard Plan Examination', desc: 'A DOB examiner reviews the plans first.' }
   ];
   var ICON_CHECK = '<svg class="check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
   var ICON_SAVE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>';
   var ICON_TRASH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>';
   var ICON_DONE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+  var ARCH_MINI = '<div class="arch mini loop" aria-hidden="true"><div class="node"><strong>Browser</strong></div><div class="wire"><b></b></div><div class="node"><strong>FastAPI</strong></div><div class="wire"><b></b></div><div class="node"><strong>Postgres</strong></div></div>';
 
   function defaults() {
     return {
@@ -553,7 +684,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
   var state = {
     inputs: defaults(), isExample: true, result: null, loading: false, error: null, changed: false,
-    saved: [], savedLoading: true, savedError: null, justSaved: false, saving: false, lastDeleted: null
+    saved: [], savedLoading: true, savedError: null, justSaved: false, saving: false, animate: false, ms: null, freshId: null
   };
 
   function $(id) { return document.getElementById(id); }
@@ -568,9 +699,42 @@ tbody tr:last-child td { border-bottom: 0; }
   function unitWord(unit) { return unit === 'business_days' ? 'business days' : 'days'; }
   function fmtDays(n) { return (Math.round(Number(n) * 10) / 10).toString(); }
   function wholeDays(n) { return Math.round(Number(n)).toString(); }
+  function fmtMs(ms) { return ms < 1000 ? ms + ' ms' : (ms / 1000).toFixed(1) + ' s'; }
   function reduceMotion() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
   function scrollToEl(el) { if (el) el.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' }); }
   function narrow() { return window.innerWidth < 980; }
+
+  // Each character of the date rises in on reveal
+  function letters(text) {
+    return text.split('').map(function (ch, i) {
+      return '<span style="--i:' + i + '">' + (ch === ' ' ? '&nbsp;' : esc(ch)) + '</span>';
+    }).join('');
+  }
+
+  function countUp(el) {
+    var to = Number(el.getAttribute('data-count'));
+    if (reduceMotion()) { el.textContent = to; return; }
+    var t0 = performance.now(), dur = 900;
+    function step(t) {
+      var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = Math.round(to * e);
+      if (k < 1) requestAnimationFrame(step);
+    }
+    el.textContent = '0';
+    requestAnimationFrame(step);
+  }
+
+  function toast(message, actionLabel, onAction) {
+    var zone = $('toasts'), el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = '<span>' + message + '</span>' + (actionLabel ? '<button type="button" id="undo-btn">' + esc(actionLabel) + '</button>' : '');
+    zone.innerHTML = '';
+    zone.appendChild(el);
+    var gone = false;
+    function close() { if (gone) return; gone = true; el.classList.add('out'); setTimeout(function () { el.remove(); }, 260); }
+    if (actionLabel) el.querySelector('button').addEventListener('click', function () { close(); onAction(); });
+    setTimeout(close, 6000);
+  }
 
   /* ---------- Talking to the backend ---------- */
   var FIELD_NAMES = { name: 'Project name', borough: 'Borough', estimated_cost: 'Estimated job cost', floor_area: 'Floor area',
@@ -633,9 +797,10 @@ tbody tr:last-child td { border-bottom: 0; }
     renderResult();
     clearTimeout(slowTimer);
     slowTimer = setTimeout(function () { if (state.loading) { state.slow = true; renderResult(); } }, 4000);
-    var sent = JSON.stringify(state.inputs);
+    var sent = JSON.stringify(state.inputs), t0 = performance.now();
     return api('/api/predict', 'POST', requestBody(state.inputs)).then(function (data) {
-      state.result = data; state.resultFor = sent; state.changed = false;
+      state.result = data; state.resultFor = sent; state.changed = false; state.animate = true;
+      state.ms = Math.round(performance.now() - t0);
     }, function (err) {
       state.error = err.message;
     }).then(function () {
@@ -656,14 +821,21 @@ tbody tr:last-child td { border-bottom: 0; }
     }).then(function () { state.savedLoading = false; renderSaved(); });
   }
 
+  function setStatus(ok, text) {
+    $('db-wrap').className = 'db ' + (ok ? 'ok' : 'bad');
+    $('db-status').textContent = text;
+    $('db-pill').className = 'live ' + (ok ? 'ok' : 'bad');
+    $('db-pill-text').textContent = ok ? 'Database live' : 'Offline';
+  }
+
   function checkHealth() {
-    api('/api/health').then(function (h) {
+    return api('/api/health').then(function (h) {
       var ok = h.database === 'connected';
-      $('db-wrap').className = 'db ' + (ok ? 'ok' : 'bad');
-      $('db-status').textContent = ok ? 'Connected to the database' : 'Database not connected';
-    }, function () {
-      $('db-wrap').className = 'db bad';
-      $('db-status').textContent = 'Server not reachable';
+      setStatus(ok, ok ? 'Connected to the database' : 'Database not connected');
+      return h;
+    }, function (err) {
+      setStatus(false, 'Server not reachable');
+      throw err;
     });
   }
 
@@ -745,13 +917,22 @@ tbody tr:last-child td { border-bottom: 0; }
     return '<div class="panel state ' + kind + '"><h2>' + title + '</h2><p class="muted">' + text + '</p>' + (extra || '') + '</div>';
   }
 
+  function waitText() {
+    return state.slow ? 'Waking up the server. Free hosting can take up to a minute after a quiet period.' : 'Sending your project to the model.';
+  }
+
   function renderResult() {
     syncForm();
     var box = $('result');
-    if (state.loading) {
-      box.innerHTML = stateCard('loading', '<span class="spin" aria-hidden="true"></span>Calculating your forecast', state.slow
-        ? 'Waking up the server. Free hosting can take up to a minute after a quiet period.'
-        : 'Running the model on your project.');
+    box.className = 'result';
+    if (state.loading && !state.result) {
+      box.innerHTML = '<div class="panel skeleton" aria-busy="true">' +
+        '<span class="sk" style="width:38%;height:16px"></span>' +
+        '<span class="sk" style="width:72%;height:64px"></span>' +
+        '<span class="sk" style="width:55%;height:16px"></span>' +
+        '<span class="sk" style="width:100%;height:12px;margin-top:24px"></span>' +
+        '<div style="margin-top:22px">' + ARCH_MINI + '</div>' +
+        '<p class="wait">' + waitText() + '</p></div>';
       return;
     }
     if (state.error) {
@@ -761,7 +942,7 @@ tbody tr:last-child td { border-bottom: 0; }
       return;
     }
     if (!state.result) {
-      box.innerHTML = stateCard('empty', 'Your forecast will appear here', 'Fill in the project details and press Forecast approval date.');
+      box.innerHTML = stateCard('empty', 'Your forecast will appear here', 'Fill in the project and press Forecast approval date.');
       return;
     }
 
@@ -779,14 +960,14 @@ tbody tr:last-child td { border-bottom: 0; }
     if (f.factors && f.factors.length) {
       var hasBase = f.base_days !== null && f.base_days !== undefined;
       var maxAbs = Math.max.apply(null, f.factors.map(function (x) { return Math.abs(x.days); }).concat([1]));
-      drivers = f.factors.map(function (x) {
+      drivers = f.factors.map(function (x, i) {
         var w = Math.round(Math.abs(x.days) / maxAbs * 500) / 10, slower = x.days > 0;
         return '<div class="driver"><div class="driver-label"><strong>' + esc(x.label) + '</strong></div>' +
-          '<div class="driver-bar" aria-hidden="true"><span class="' + (slower ? 'bar-add' : 'bar-save') + '" style="left:' + (slower ? 50 : 50 - w) + '%;width:' + w + '%"></span></div>' +
+          '<div class="driver-bar" aria-hidden="true"><span class="' + (slower ? 'bar-add' : 'bar-save') + '" style="--i:' + i + ';left:' + (slower ? 50 : 50 - w) + '%;width:' + w + '%"></span></div>' +
           '<div class="driver-value ' + (slower ? 'val-add' : 'val-save') + '">' + (slower ? '+' : '−') + fmtDays(Math.abs(x.days)) + ' ' + unit + '</div></div>';
       }).join('');
       drivers = '<section class="panel" aria-labelledby="drivers-title">' +
-        '<div class="drivers-head"><div><h2 id="drivers-title">What moves this forecast</h2><p class="small muted">Each factor adds or saves ' + unit + ' compared with the model\'s starting value.</p></div>' +
+        '<div class="drivers-head"><h2 id="drivers-title">What moves this forecast</h2>' +
         '<span class="legend-keys"><span class="key"><span class="swatch" style="background:var(--save)"></span>Saves ' + unit + '</span><span class="key"><span class="swatch" style="background:var(--add)"></span>Adds ' + unit + '</span></span></div>' +
         (hasBase ? '<div class="driver base"><div class="driver-label"><strong>Starting value</strong><span>Before your project details</span></div><div class="driver-bar" aria-hidden="true"></div><div class="driver-value">' + fmtDays(f.base_days) + ' ' + unit + '</div></div>' : '') +
         drivers +
@@ -799,45 +980,55 @@ tbody tr:last-child td { border-bottom: 0; }
     if (info.r_squared != null) facts += '<div><dt>Fit (R²)</dt><dd>' + Number(info.r_squared).toFixed(3) + '</dd></div>';
     if (info.n_obs != null) facts += '<div><dt>Trained on</dt><dd>' + Number(info.n_obs).toLocaleString('en-US') + ' filings</dd></div>';
     if (info.trained_on) facts += '<div><dt>Trained on</dt><dd>' + esc(info.trained_on) + ' filings</dd></div>';
-    var notes = (f.notes || []).map(function (n) { return '<p class="small muted">' + esc(n) + '</p>'; }).join('');
+    var notes = (f.notes || []).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('');
 
-    box.innerHTML =
-      (state.changed ? '<p class="stale" role="status">You changed the inputs. Press <strong>Update forecast</strong> to refresh.</p>' : '') +
+    var top = '';
+    if (state.loading) top = '<div class="updating" role="status"><span class="spin" aria-hidden="true"></span>Updating forecast<span class="muted">' + (state.slow ? waitText() : '') + '</span></div>';
+    else if (state.changed) top = '<p class="stale" role="status">You changed the inputs. Press <strong>Update forecast</strong> to refresh.</p>';
+
+    box.innerHTML = top +
       '<section class="panel forecast" aria-label="Forecast">' +
-      '<div class="result-head">' +
-        '<div class="result-title"><h2 id="result-heading" tabindex="-1">' + esc(name) + '</h2>' +
-          '<ul class="chips">' + chips.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>' +
-        '<div class="result-actions">' +
-          (state.justSaved ? '<span class="saved-msg" role="status">' + ICON_DONE + 'Saved <a href="#saved">View list</a></span>' : '') +
-          '<button type="button" class="btn btn-outline btn-sm" id="save-btn"' + (state.saving ? ' disabled' : '') + '>' + ICON_SAVE + (state.saving ? 'Saving…' : 'Save project') + '</button>' +
+        '<div class="result-head">' +
+          '<div class="result-title"><h2 id="result-heading" tabindex="-1">' + esc(name) + '</h2>' +
+            '<ul class="chips">' + chips.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></div>' +
+          '<div class="result-actions">' +
+            (state.justSaved ? '<span class="saved-msg" role="status">' + ICON_DONE + 'Saved <a href="#saved">View list</a></span>' : '') +
+            '<button type="button" class="btn btn-outline btn-sm" id="save-btn"' + (state.saving || state.loading ? ' disabled' : '') + '>' + ICON_SAVE + (state.saving ? 'Saving…' : 'Save project') + '</button>' +
+          '</div>' +
         '</div>' +
-      '</div>' +
         '<div class="fc-body">' +
-        '<p class="kicker">Most likely approval date</p>' +
-        '<p class="big">' + fmtDate(f.p50_date) + '</p>' +
-        '<p class="fc-sub">About <strong>' + wholeDays(f.p50_days) + ' ' + unit + '</strong> after you file on ' + fmtDate(inp.filed) + '.</p>' +
-        '<div class="timeline" role="img" aria-label="' + esc(aria) + '">' +
-          '<div class="tl-track"></div>' +
-          '<div class="tl-band" style="left:' + lo + '%;right:0"></div>' +
-          '<div class="tl-pin" style="left:0"></div>' +
-          '<div class="tl-pin" style="left:100%"></div>' +
-          '<div class="tl-mark" style="left:' + p50 + '%"></div>' +
-          '<div class="tl-label top ' + labelPos(p50) + '" style="left:' + p50 + '%">Likely ' + fmtDate(f.p50_date, true) + '</div>' +
-          '<div class="tl-label bottom at-start" style="left:0">Filed<strong>' + fmtDate(inp.filed, true) + '</strong></div>' +
-          '<div class="tl-label bottom at-end" style="left:100%">Late end<strong>' + fmtDate(f.high_date, true) + '</strong></div>' +
-        '</div>' +
-        '<dl class="fc-facts">' +
-          '<div><dt>Likely range</dt><dd>' + fmtDate(f.low_date, true) + ' to ' + fmtDate(f.high_date) + '</dd><dd class="sub">' + wholeDays(f.low_days) + ' to ' + wholeDays(f.high_days) + ' ' + unit + ' after filing</dd></div>' +
-          '<div><dt>Safe date to book your crew</dt><dd>' + fmtDate(f.high_date) + '</dd><dd class="sub">The late end of the range</dd></div>' +
-        '</dl>' +
+          '<p class="kicker">Most likely approval date</p>' +
+          '<p class="big">' + letters(fmtDate(f.p50_date)) + '</p>' +
+          '<p class="fc-sub">About <strong><span data-count="' + wholeDays(f.p50_days) + '">' + wholeDays(f.p50_days) + '</span> ' + unit + '</strong> after you file on ' + fmtDate(inp.filed) + '.</p>' +
+          '<div class="timeline" role="img" aria-label="' + esc(aria) + '">' +
+            '<div class="tl-track"></div>' +
+            '<div class="tl-band" style="left:' + lo + '%;right:0"></div>' +
+            '<div class="tl-pin" style="left:0"></div>' +
+            '<div class="tl-pin" style="left:100%"></div>' +
+            '<div class="tl-mark" style="left:' + p50 + '%"></div>' +
+            '<div class="tl-label top ' + labelPos(p50) + '" style="left:' + p50 + '%">Likely ' + fmtDate(f.p50_date, true) + '</div>' +
+            '<div class="tl-label bottom at-start" style="left:0">Filed<strong>' + fmtDate(inp.filed, true) + '</strong></div>' +
+            '<div class="tl-label bottom at-end" style="left:100%">Late end<strong>' + fmtDate(f.high_date, true) + '</strong></div>' +
+          '</div>' +
+          '<dl class="fc-facts">' +
+            '<div><dt>Likely range</dt><dd>' + fmtDate(f.low_date, true) + ' to ' + fmtDate(f.high_date) + '</dd><dd class="sub">' + wholeDays(f.low_days) + ' to ' + wholeDays(f.high_days) + ' ' + unit + ' after filing</dd></div>' +
+            '<div><dt>Safe date to book your crew</dt><dd>' + fmtDate(f.high_date) + '</dd><dd class="sub">The late end of the range</dd></div>' +
+          '</dl>' +
         '</div>' +
       '</section>' +
       drivers +
       '<section class="panel" aria-labelledby="model-title">' +
         '<h2 id="model-title" class="panel-title">About this forecast</h2>' +
-        '<dl class="facts">' + facts + '</dl>' + notes +
+        '<dl class="facts">' + facts + '</dl>' +
+        '<p class="served">' + (state.ms != null ? '<span>Answered by FastAPI and Supabase in <strong>' + fmtMs(state.ms) + '</strong>.</span>' : '') + notes + '</p>' +
       '</section>';
 
+    if (state.loading) box.classList.add('busy');
+    if (state.animate) {
+      state.animate = false;
+      box.classList.add('reveal');
+      var c = box.querySelector('[data-count]'); if (c) countUp(c);
+    }
     $('save-btn').addEventListener('click', save);
   }
 
@@ -845,7 +1036,7 @@ tbody tr:last-child td { border-bottom: 0; }
     state.saving = true; renderResult();
     api('/api/projects', 'POST', requestBody(state.inputs)).then(function (data) {
       state.result = data.forecast; state.resultFor = JSON.stringify(state.inputs); state.changed = false;
-      state.justSaved = true; state.lastDeleted = null;
+      state.justSaved = true; state.freshId = data.id;
       return loadSaved();
     }, function (err) {
       state.error = err.message;
@@ -858,34 +1049,26 @@ tbody tr:last-child td { border-bottom: 0; }
   /* ---------- Saved projects ---------- */
   function renderSaved() {
     $('nav-saved').textContent = 'Saved projects (' + state.saved.length + ')';
-    var status = $('saved-status');
-    status.innerHTML = state.lastDeleted
-      ? '<span>Deleted “' + esc(state.lastDeleted.name || 'Untitled project') + '”.</span><button type="button" class="btn-link" id="undo-btn">Undo</button>'
-      : '';
-    if (state.lastDeleted) {
-      $('undo-btn').addEventListener('click', function () {
-        var d = state.lastDeleted; state.lastDeleted = null; renderSaved();
-        api('/api/projects', 'POST', requestBody(fromSaved(d))).then(loadSaved, function (err) { state.savedError = err.message; renderSaved(); });
-      });
-    }
-
     var list = $('saved-list');
-    if (state.savedLoading) { list.innerHTML = '<div class="panel"><p class="muted">Loading saved projects from the database…</p></div>'; return; }
+    if (state.savedLoading) {
+      list.innerHTML = '<div class="panel skeleton"><span class="sk" style="height:18px;width:60%"></span><span class="sk" style="height:18px;width:80%"></span><span class="sk" style="height:18px;width:70%"></span></div>';
+      return;
+    }
     if (state.savedError) {
       list.innerHTML = '<div class="panel state error" style="min-height:0"><p>' + esc(state.savedError) + '</p><button type="button" class="btn btn-outline btn-sm" id="saved-retry">Try again</button></div>';
       $('saved-retry').addEventListener('click', function () { state.savedLoading = true; renderSaved(); loadSaved(); });
       return;
     }
     if (!state.saved.length) {
-      list.innerHTML = '<div class="panel state empty" style="min-height:0;align-items:center;text-align:center;padding-block:40px">' +
-        '<h3>No saved projects yet</h3><p class="muted">Run a forecast and press Save project to keep it here.</p>' +
+      list.innerHTML = '<div class="panel state empty" style="min-height:0;align-items:center;text-align:center;padding-block:44px">' +
+        '<h3>No saved projects yet</h3><p class="muted">Run a forecast and press Save project.</p>' +
         '<a class="btn btn-primary btn-sm" href="#forecast">Start a forecast</a></div>';
       return;
     }
     var rows = state.saved.map(function (p) {
       var unit = unitWord(p.unit);
       var range = p.low_days == null ? '—' : wholeDays(p.low_days) + ' to ' + wholeDays(p.high_days) + ' ' + unit;
-      return '<tr>' +
+      return '<tr' + (p.id === state.freshId ? ' class="fresh"' : '') + '>' +
         '<td class="name">' + esc(p.name || 'Untitled project') + '</td>' +
         '<td data-label="Borough">' + esc(p.borough) + '</td>' +
         '<td data-label="Job type">' + esc(JOB_LABEL[p.job_type] || p.job_type || '—') + '</td>' +
@@ -897,6 +1080,7 @@ tbody tr:last-child td { border-bottom: 0; }
           '<button type="button" class="btn btn-outline btn-sm btn-icon" data-del="' + p.id + '" aria-label="Delete ' + esc(p.name || 'project') + '">' + ICON_TRASH + '</button>' +
         '</div></td></tr>';
     }).join('');
+    state.freshId = null;
     list.innerHTML =
       '<div class="panel saved-card"><div class="table-wrap"><table class="saved-table stack">' +
         '<thead><tr><th scope="col">Project</th><th scope="col">Borough</th><th scope="col">Job type</th><th scope="col">Filing date</th><th scope="col">Likely approval</th><th scope="col">Range</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>' +
@@ -918,12 +1102,32 @@ tbody tr:last-child td { border-bottom: 0; }
         var item = state.saved.filter(function (x) { return x.id === did; })[0]; if (!item) return;
         del.disabled = true;
         api('/api/projects/' + did, 'DELETE').then(function () {
-          state.lastDeleted = item;
+          toast('Deleted “' + esc(item.name || 'Untitled project') + '”.', 'Undo', function () {
+            api('/api/projects', 'POST', requestBody(fromSaved(item))).then(function (data) {
+              state.freshId = data.id; return loadSaved();
+            }, function (err) { toast(esc(err.message)); });
+          });
           return loadSaved();
-        }, function (err) { state.savedError = err.message; renderSaved(); }).then(function () {
-          var u = $('undo-btn'); if (u) u.focus({ preventScroll: true });
-        });
+        }, function (err) { del.disabled = false; toast(esc(err.message)); });
       }
+    });
+  }
+
+  /* ---------- Live stack test ---------- */
+  function bindPing() {
+    var arch = $('arch'), out = $('ping-result'), btn = $('ping-btn');
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      out.textContent = 'Sending a request…';
+      arch.classList.remove('run'); void arch.offsetWidth; arch.classList.add('run');
+      var t0 = performance.now();
+      checkHealth().then(function (h) {
+        var ms = Math.round(performance.now() - t0);
+        out.innerHTML = 'Round trip in <strong>' + fmtMs(ms) + '</strong>. ' +
+          (h.database === 'connected' ? 'Database connected, <strong>' + h.saved_projects + '</strong> saved projects.' : 'The database did not answer.');
+      }, function () {
+        out.textContent = 'The server did not answer. Try again in a minute.';
+      }).then(function () { btn.disabled = false; });
     });
   }
 
@@ -934,13 +1138,19 @@ tbody tr:last-child td { border-bottom: 0; }
     if (t) { e.preventDefault(); scrollToEl(t); }
   });
 
+  // The top bar turns to glass once the page scrolls
+  function onScroll() { document.body.classList.toggle('scrolled', window.scrollY > 12); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
   buildForm();
   bindSaved();
+  bindPing();
   syncForm();
   renderSaved();
   runForecast(false);
   loadSaved();
-  checkHealth();
+  checkHealth().catch(function () {});
 })();
 </script>
 </body>
