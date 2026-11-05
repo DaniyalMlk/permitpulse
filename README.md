@@ -55,6 +55,14 @@ Interactive docs: `/docs` on the backend URL.
 Supabase (free plan, Postgres). In the Supabase SQL Editor run `db/schema.sql`, then `db/seed.sql`, then `db/002_backend.sql`.
 Never commit database passwords or API keys.
 
+To check the database is current, run `db/check.sql`. It should return:
+
+| coefficients | coefficient_sum | n_obs | r_squared | training_rows | actual_days_sum | predicted_days_sum | has_unit_column |
+|---|---|---|---|---|---|---|---|
+| 26 | 146.2937 | 263165 | 0.0441 | 2000 | 33937 | 38263.61 | 1 |
+
+`saved_projects` is 3 for a fresh database and grows as people save projects.
+
 ## Run it locally
 
 ```bash

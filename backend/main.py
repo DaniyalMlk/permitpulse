@@ -198,23 +198,41 @@ WORK_COLUMN_NAMES = {
     "MechanicSystems": ["mechanicalsystems", "mechanicsystems"],
     "ProtMechanicMethods": ["protectionmechanicalmethods", "protmechanicmethods"],
     "Shed": ["shed", "sidewalkshed"],
+    "Fence": ["fence", "constructionfence"],
 }
 DATASET_JOB_TYPES = {"ALT-CO": "ALT-CO - New Building with Existing Elements to Remain"}
+
+
+def known_value(predictor, column, value):
+    """Spell a form value the way the training data did (e.g. Manhattan -> MANHATTAN)."""
+    try:
+        encoder = predictor.bundle["preprocessor"].named_transformers_["categorical"]
+        known = [str(k) for k in encoder.categories_[list(encoder.feature_names_in_).index(column)]]
+    except (KeyError, AttributeError, ValueError):
+        return value
+    wanted = value.casefold()
+    for k in known:
+        if k.casefold() == wanted:
+            return k
+    for k in known:
+        if k.casefold().startswith(wanted):
+            return k
+    return value
 
 
 def histgb_forecast(conn, p, predictor):
     request = {
         "filing_date": p.planned_filing_date.isoformat(),
-        "filing_review_type": p.review_type,
-        "job_type": DATASET_JOB_TYPES.get(p.job_type, p.job_type),
-        "borough": p.borough,
+        "filing_review_type": known_value(predictor, "filing_review_type", p.review_type),
+        "job_type": known_value(predictor, "job_type", DATASET_JOB_TYPES.get(p.job_type, p.job_type)),
+        "borough": known_value(predictor, "borough", p.borough),
         "filing_kind": "I",  # a new job is an initial filing (job number ends in -I1)
         "initial_cost": p.estimated_cost,
         "total_construction_floor_area": p.floor_area,
         "proposed_dwelling_units": p.dwelling_units,
     }
     if p.building_type:
-        request["building_type"] = p.building_type
+        request["building_type"] = known_value(predictor, "building_type", p.building_type)
     if p.stories:
         request["proposed_no_of_stories"] = p.stories
     chosen = {name for w in p.work_types for name in WORK_COLUMN_NAMES.get(w, [w.lower()])}
