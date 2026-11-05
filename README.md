@@ -4,7 +4,7 @@ PermitPulse forecasts how long an NYC construction permit will take to reach DOB
 
 TECH-UB 24 Projects in Programming & Data Science · Fall 2026 team project
 
-**Live app (frontend + backend + database):** https://permitpulse.onrender.com
+**Live app (frontend + backend + database):** https://permitpulse-qroy.onrender.com
 Free hosting: the first visit after 15 quiet minutes takes about a minute while the server wakes up.
 
 Static copy of the page: https://daniyalmlk.github.io/permitpulse/ (it calls the same backend)
