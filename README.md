@@ -18,9 +18,18 @@ browser (index.html)  ->  FastAPI backend (backend/main.py, on Render)  ->  Supa
                            GET  /api/projects lists saved projects
 ```
 
-The model right now is our first linear regression. Its coefficients live in the database
-(`model_coefficients`) and the backend reads them for every forecast. The quantile model in `ml/`
-(P10/P50/P90 in business days) takes over automatically once its trained file is in `models/`.
+Forecasts come from our HistGB quantile models (`models/permitpulse_histgb.joblib`, code in `ml/`):
+the most likely number of business days to approval (P50) and a range from P10 to P90. They were trained
+on 2021–2024 filings and checked on 142,439 filings from 2025 that they never saw:
+
+| | Fit (R²) | Typical error | Approvals inside the range |
+|---|---|---|---|
+| HistGB quantile model (live) | 0.222 | 13.1 business days | 88.4% |
+| Linear regression (our first model) | 0.044 | | |
+
+The numbers come from `models/metrics.json`, written by `ml/train.py`. If the model file is missing or
+fails to load, the backend falls back to the linear regression, whose coefficients live in the database
+(`model_coefficients`).
 
 ## Data
 
@@ -33,6 +42,7 @@ The model right now is our first linear regression. Its coefficients live in the
 - `backend/main.py` – FastAPI backend: forecasts, saved projects, health check
 - `backend/requirements.txt` – backend packages
 - `ml/` – quantile model: feature code, training script and predictor
+- `models/` – the trained HistGB model and its test scores (`metrics.json`)
 - `db/schema.sql` – database tables (Supabase / Postgres)
 - `db/seed.sql` – sample data: our regression model, 2,000 training filings, example users, projects and forecasts
 - `db/002_backend.sql` – small update for the backend (forecast units)
@@ -94,8 +104,8 @@ Open http://localhost:8000
 2. Set `DATABASE_URL` to the Supabase **Session pooler** connection string (Render has no IPv6, so the direct connection does not work).
 3. Deploy. The health check is `/api/health`.
 
-When the quantile model file is added to `models/`, change the build command to
-`pip install -r backend/requirements.txt -r ml/requirements.txt` and pin the scikit-learn version it was trained with.
+To update the model, run `ml/train.py`, then replace `models/permitpulse_histgb.joblib` and `models/metrics.json`.
+Keep `scikit-learn` in `backend/requirements.txt` at the version the model was trained with (now 1.9.1).
 
 ## Team
 

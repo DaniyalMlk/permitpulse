@@ -439,8 +439,8 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
   <div class="wrap hero">
     <h1 id="page-title" aria-label="When will your NYC permit be approved?"><span class="w"><span style="--i:0">When</span></span> <span class="w"><span style="--i:1">will</span></span> <span class="w"><span style="--i:2">your</span></span> <span class="w"><span style="--i:3">NYC</span></span> <span class="w"><span style="--i:4">permit</span></span> <span class="w"><span style="--i:5">be</span></span> <span class="w"><span style="--i:6">approved?</span></span></h1>
     <div class="hero-text">
-      <p>Get your likely DOB approval date, a realistic range, and what drives it. Learned from 263,165 past filings.</p>
-      <p class="notice"><i aria-hidden="true"></i><span><strong>Skeleton build.</strong> Early regression model, served from our database.</span></p>
+      <p>Get your likely DOB approval date and a realistic range. Learned from NYC DOB filings from 2021 to 2024.</p>
+      <p class="notice"><i aria-hidden="true"></i><span><strong>Skeleton build.</strong> Forecasts come from our HistGB model. Saved projects live in our database.</span></p>
     </div>
   </div>
 </div>
@@ -562,7 +562,7 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
       <li class="panel step">
         <span class="step-no" aria-hidden="true">2</span>
         <h3>A model of the wait</h3>
-        <p>Today a linear regression. Next, quantile models that forecast business days with an honest range.</p>
+        <p>HistGB quantile models forecast the wait in business days, plus a likely range around it.</p>
       </li>
       <li class="panel step">
         <span class="step-no" aria-hidden="true">3</span>
@@ -576,7 +576,7 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
         <div class="panel-head">
           <div>
             <h3 class="panel-title">The live stack</h3>
-            <p>Every forecast travels this path.</p>
+            <p>Every saved project travels this path.</p>
           </div>
           <button type="button" class="btn btn-outline btn-sm" id="ping-btn">Test the connection</button>
         </div>
@@ -592,12 +592,13 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
       <div class="panel">
         <div>
           <h3 class="panel-title">Model results</h3>
-          <p class="small muted">Quantile numbers reported by our teammate on 2025 filings.</p>
+          <p class="small muted">HistGB checked on 142,439 filings from 2025 it never trained on.</p>
         </div>
         <div>
-          <div class="metric"><div>Linear regression<small>Live now, fit</small></div><span>R² 0.044</span></div>
-          <div class="metric"><div>Quantile model<small>Typical error</small></div><span>13.3 <small>business days</small></span></div>
-          <div class="metric"><div>Quantile model<small>Approvals inside range</small></div><span>85.3%</span></div>
+          <div class="metric"><div>HistGB quantile model<small>Live now, fit</small></div><span>R² 0.222</span></div>
+          <div class="metric"><div>Typical error<small>Most likely date vs. real approval</small></div><span>13.1 <small>business days</small></span></div>
+          <div class="metric"><div>Approvals inside the range<small>Between the early and late end</small></div><span>88.4%</span></div>
+          <div class="metric"><div>Linear regression<small>Our first model, fit</small></div><span>R² 0.044</span></div>
         </div>
       </div>
     </div>
@@ -663,7 +664,7 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
   ];
   var BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
   var JOB_LABEL = { 'Alteration': 'Alteration', 'Alteration CO': 'Alteration CO', 'New Building': 'New Building', 'ALT-CO': 'ALT-CO (existing elements remain)', 'Full Demolition': 'Full Demolition' };
-  var MODEL_LABEL = { 'linear_regression': 'Linear regression', 'histgb_quantile': 'Quantile model' };
+  var MODEL_LABEL = { 'linear_regression': 'Linear regression', 'histgb_quantile': 'HistGB quantile model' };
   var REVIEWS = [
     { v: 'Professional Certification', desc: 'Your architect or engineer certifies the plans.' },
     { v: 'Standard Plan Examination', desc: 'A DOB examiner reviews the plans first.' }
@@ -960,8 +961,9 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
     var info = f.model_info || {};
     var facts = '<div><dt>Model</dt><dd>' + esc(MODEL_LABEL[f.model_type] || f.model) + '</dd></div>';
     if (info.r_squared != null) facts += '<div><dt>Fit (R²)</dt><dd>' + Number(info.r_squared).toFixed(3) + '</dd></div>';
+    if (info.typical_error != null) facts += '<div><dt>Typical error</dt><dd>' + fmtDays(info.typical_error) + ' ' + unit + '</dd></div>';
     if (info.n_obs != null) facts += '<div><dt>Trained on</dt><dd>' + Number(info.n_obs).toLocaleString('en-US') + ' filings</dd></div>';
-    if (info.trained_on) facts += '<div><dt>Trained on</dt><dd>' + esc(info.trained_on) + ' filings</dd></div>';
+    if (info.trained_on) facts += '<div><dt>Trained on</dt><dd>' + esc(String(info.trained_on).replace('-', '–')) + ' filings</dd></div>';
     var notes = (f.notes || []).map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('');
 
     var top = '';
@@ -1002,7 +1004,7 @@ details .table-wrap { padding: 0 clamp(20px, 3.5vw, 28px) 20px; }
       '<section class="panel" aria-labelledby="model-title">' +
         '<h2 id="model-title" class="panel-title">About this forecast</h2>' +
         '<dl class="facts">' + facts + '</dl>' +
-        '<p class="served">' + (state.ms != null ? '<span>Answered by FastAPI and Supabase in <strong>' + fmtMs(state.ms) + '</strong>.</span>' : '') + notes + '</p>' +
+        '<p class="served">' + (state.ms != null ? '<span>Answered by our FastAPI server in <strong>' + fmtMs(state.ms) + '</strong>.</span>' : '') + notes + '</p>' +
       '</section>';
 
     if (state.loading) box.classList.add('busy');

@@ -3,3 +3,12 @@ starlette==1.9.0
 uvicorn==0.54.0
 pydantic==2.14.1
 psycopg[binary]==3.3.6
+
+# the HistGB model in models/ (scikit-learn must match the version it was trained with)
+scikit-learn==1.9.1
+numpy==2.4.6
+scipy==1.18.1
+pandas==2.3.3
+joblib==1.6.0
+threadpoolctl==3.7.0
+holidays==0.107

@@ -1,8 +1,8 @@
 # PermitPulse — Frontend integration package
 
 > **In this repo:** the website backend (`backend/main.py`) replaces `api.py` and `frontend_example.js`.
-> After running `train.py`, put `permitpulse_histgb.joblib` in the top-level `models/` folder and the
-> backend switches to this model automatically.
+> The trained model the website uses is `models/permitpulse_histgb.joblib` (trained on 2021–2024 filings
+> with scikit-learn 1.9.1), and its scores are in `models/metrics.json`.
 
 ## What this delivers
 

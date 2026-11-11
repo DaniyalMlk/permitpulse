@@ -1,7 +1,6 @@
 """Features matching the team's HistGB baseline experiment; freeze with the trained model."""
 import numpy as np
 import pandas as pd
-import pyarrow.parquet as pq
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OrdinalEncoder
 BASE_CAT = ["borough", "job_type", "filing_review_type", "building_type"]
@@ -19,6 +18,7 @@ def parse_date_column(series):
     return result.astype("datetime64[ns]")
 
 def load_all(path):
+    import pyarrow.parquet as pq  # only needed for training, not for the website
     fields = pq.ParquetFile(path).schema.names
     work_cols = [c for c in fields if c.endswith("_work_type")]
     needed = list(dict.fromkeys(BASE_CAT + [c for c in EXTRA_CAT if c != "filing_kind"]

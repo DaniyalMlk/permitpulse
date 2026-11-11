@@ -15,6 +15,7 @@ Security:
 """
 import base64
 import hashlib
+import json
 import os
 import re
 import sys
@@ -37,6 +38,10 @@ ROOT = Path(__file__).resolve().parent.parent
 LINEAR_MODEL = "weekday_regression_v1"
 HISTGB_MODEL = "histgb_quantile_v1"
 HISTGB_FILE = ROOT / "models" / "permitpulse_histgb.joblib"
+HISTGB_METRICS = ROOT / "models" / "metrics.json"
+
+# The free server has a small slice of CPU: one thread per forecast is faster than many
+os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 MAX_BODY_BYTES = 16_384          # a project is well under 1 KB
 MAX_PROJECTS = 2_000             # whole table
@@ -355,23 +360,53 @@ def linear_forecast(p):
 # ---------- Quantile model (file in models/, code in ml/) ----------
 
 _histgb = None
+_histgb_info = {}
+_histgb_lock = threading.Lock()
 
 
 def load_histgb():
-    global _histgb
-    if _histgb is None and HISTGB_FILE.exists():
-        sys.path.insert(0, str(ROOT / "ml"))
-        from predictor import PermitPulsePredictor
-        _histgb = PermitPulsePredictor(str(HISTGB_FILE))
+    global _histgb, _histgb_info
+    with _histgb_lock:
+        if _histgb is None and HISTGB_FILE.exists():
+            sys.path.insert(0, str(ROOT / "ml"))
+            from predictor import PermitPulsePredictor
+            predictor = PermitPulsePredictor(str(HISTGB_FILE))
+            _histgb_info = histgb_scores(predictor.bundle)
+            _histgb = predictor
     return _histgb
 
 
-# our work type codes -> column names in the DOB data (letters only, lower case)
-WORK_COLUMN_NAMES = {
-    "MechanicSystems": ["mechanicalsystems", "mechanicsystems"],
-    "ProtMechanicMethods": ["protectionmechanicalmethods", "protmechanicmethods"],
-    "Shed": ["shed", "sidewalkshed"],
-    "Fence": ["fence", "constructionfence"],
+def histgb_scores(bundle):
+    """Scores from models/metrics.json, measured on a year of filings the model did not train on."""
+    info = {"trained_on": bundle.get("training_years")}
+    try:
+        scores = json.loads(HISTGB_METRICS.read_text())[f"{bundle['validation_year']}_validation"]["all"]
+        info["r_squared"] = round(scores["p50_r2"], 3)
+        info["typical_error"] = round(scores["p50_mae"], 1)
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return info
+
+
+# our work type codes -> the yes/no column for it in the DOB data
+WORK_COLUMNS = {
+    "GeneralConstruction": "general_construction_work_type",
+    "Plumbing": "plumbing_work_type",
+    "MechanicSystems": "mechanical_systems_work_type",
+    "Structural": "structural_work_type",
+    "Foundation": "foundation_work_type",
+    "EarthWork": "earth_work_work_type",
+    "Sprinkler": "sprinkler_work_type",
+    "StandPipe": "stand_pipe_work_type",
+    "Shed": "shed_work_type",
+    "Scaffold": "scaffold_work_type",
+    "Fence": "fence_work_type",
+    "Sign": "sign_work_type",
+    "CurbCut": "curb_cut_work_type",
+    "Antenna": "antenna_work_type",
+    "Solar": "solar_work_type",
+    "GreenRoof": "green_roof_work_type",
+    "ProtMechanicMethods": "protection_mechanical_methods_work_type",
 }
 DATASET_JOB_TYPES = {"ALT-CO": "ALT-CO - New Building with Existing Elements to Remain"}
 
@@ -408,10 +443,9 @@ def histgb_forecast(p, predictor):
         request["building_type"] = known_value(predictor, "building_type", p.building_type)
     if p.stories:
         request["proposed_no_of_stories"] = p.stories
-    chosen = {name for w in p.work_types for name in WORK_COLUMN_NAMES.get(w, [w.lower()])}
+    chosen = {WORK_COLUMNS[w] for w in p.work_types}
     for column in predictor.bundle["work_columns"]:
-        key = re.sub(r"[^a-z]", "", column.lower().replace("work_type", ""))
-        request[column] = "YES" if key in chosen else "NO"
+        request[column] = "YES" if column in chosen else "NO"
 
     out = predictor.predict(request)
     return {
@@ -423,7 +457,7 @@ def histgb_forecast(p, predictor):
         "high_days": out["p90"],
         "base_days": None,
         "factors": [],
-        "model_info": {"trained_on": predictor.bundle.get("training_years")},
+        "model_info": dict(_histgb_info),
         "notes": list(out.get("notes", [])),
     }
 
@@ -445,6 +479,11 @@ def with_dates(result, start):
     for key in ("p50", "low", "high"):
         result[key + "_date"] = to_date(start, result[key + "_days"], result["unit"]).isoformat()
     return result
+
+
+# load the model while the server starts, so the first forecast does not wait for it
+if HISTGB_FILE.exists():
+    threading.Thread(target=load_histgb, daemon=True).start()
 
 
 # ---------- API ----------
@@ -514,10 +553,15 @@ def save_project(p: ProjectIn, x_owner_key: str | None = Header(None)):
         if counts["mine"] >= MAX_PROJECTS_PER_BROWSER:
             raise HTTPException(429, f"You can keep up to {MAX_PROJECTS_PER_BROWSER} projects. Delete some to save more.")
         if result["model"] == HISTGB_MODEL:
+            info = result["model_info"]
             conn.execute(
-                "insert into model_runs (name, description, model_type) values (%s, %s, %s) on conflict (name) do nothing",
-                [HISTGB_MODEL, "HistGradientBoosting quantile models (P10/P50/P90), business days, trained on 2021-2023 filings",
-                 "histgb_quantile"],
+                """
+                insert into model_runs (name, description, r_squared, model_type) values (%s, %s, %s, %s)
+                on conflict (name) do nothing
+                """,
+                [HISTGB_MODEL,
+                 f"HistGradientBoosting quantile models (P10/P50/P90), business days, trained on {info.get('trained_on')} filings",
+                 info.get("r_squared"), "histgb_quantile"],
             )
         project = conn.execute(
             """
