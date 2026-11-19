@@ -106,18 +106,10 @@ def score_predictions(y, pred):
     }
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data", type=argparse.FileType("rb"), default=None)
-    parser.add_argument("--seed", type=int, default=SEED)
-    parser.add_argument("--test-fraction", type=float, default=TEST_FRACTION)
-    args = parser.parse_args()
-    data_path = DEFAULT_DATA if args.data is None else args.data.name
-    if args.data is not None:
-        args.data.close()
-
+def fit_regression(data_path=DEFAULT_DATA, seed=SEED, test_fraction=TEST_FRACTION):
+    """Fit v1 on the training split and score it against the average-days baseline."""
     df = prepare(load(data_path))
-    train, test = split(df, args.test_fraction, args.seed)
+    train, test = split(df, test_fraction, seed)
 
     work_columns = [column for column in df.columns if column.startswith("WT_")]
     work_kept, work_dropped = varying(train, work_columns)
@@ -170,6 +162,43 @@ def main():
     baseline = float(y_train.mean())
     baseline_test = score_constant(y_test, baseline)
 
+    return {
+        "data_path": data_path,
+        "seed": seed,
+        "df": df,
+        "train": train,
+        "test": test,
+        "model": model,
+        "work_dropped": work_dropped,
+        "dropped_collinear": dropped_collinear,
+        "job_reference": job_reference,
+        "season_reference": season_reference,
+        "train_fit": train_fit,
+        "test_fit": test_fit,
+        "baseline": baseline,
+        "baseline_test": baseline_test,
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--data", type=argparse.FileType("rb"), default=None)
+    parser.add_argument("--seed", type=int, default=SEED)
+    parser.add_argument("--test-fraction", type=float, default=TEST_FRACTION)
+    args = parser.parse_args()
+    data_path = DEFAULT_DATA if args.data is None else args.data.name
+    if args.data is not None:
+        args.data.close()
+
+    fitted = fit_regression(data_path, args.seed, args.test_fraction)
+    df = fitted["df"]
+    model = fitted["model"]
+    train = fitted["train"]
+    test = fitted["test"]
+    train_fit = fitted["train_fit"]
+    test_fit = fitted["test_fit"]
+    baseline = fitted["baseline"]
+    baseline_test = fitted["baseline_test"]
     filed = df["Filing Date"]
     both_review = int(((df["File_Standard"] + df["File_Certif"]) == 1).sum())
     print(f"Source: {data_path}")
@@ -178,12 +207,12 @@ def main():
     print(f"Outcome: {OUTCOME}")
     print("Left out: Approved Date, Signoff Date (known only after approval),")
     print("          File_Certif (the other filing-review flag), Borough text,")
-    print(f"          work types with no variation in training: {', '.join(work_dropped) or 'none'}")
+    print(f"          work types with no variation in training: {', '.join(fitted['work_dropped']) or 'none'}")
     print(f"File_Standard + File_Certif covers every row: {both_review == len(df)} ({both_review:,} of {len(df):,})")
-    print(f"Reference borough: Manhattan (all borough flags 0)")
-    print(f"Reference job type: {job_reference}")
-    print(f"Reference season-year: {season_reference}")
-    print(f"Dropped as duplicates of another column: {', '.join(dropped_collinear) or 'none'}")
+    print("Reference borough: Manhattan (all borough flags 0)")
+    print(f"Reference job type: {fitted['job_reference']}")
+    print(f"Reference season-year: {fitted['season_reference']}")
+    print(f"Dropped as duplicates of another column: {', '.join(fitted['dropped_collinear']) or 'none'}")
     print("Job types:", ", ".join(f"{name} ({count:,})" for name, count in df["Job Type"].value_counts().items()))
     print("Winter_Y = December Y-1, January Y, February Y")
     print()
@@ -203,7 +232,7 @@ def main():
     counts = df["SeasonYear"].value_counts()
     print("Season-year row counts (full data):")
     for label in sorted(counts.index, key=season_key):
-        marker = "  reference" if label == season_reference else ""
+        marker = "  reference" if label == fitted["season_reference"] else ""
         print(f"  {label:<16} {counts[label]:>8,}{marker}")
 
 
